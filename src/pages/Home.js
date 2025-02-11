@@ -14,7 +14,6 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import axios from "axios";
 
 function AddFinger() {
   const [members, setMembers] = useState([]);
@@ -26,17 +25,17 @@ function AddFinger() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/members`);
-        setMembers(response.data);
+        const response = await fetch("http://localhost:5000/api/fingrtprints/members");
+        const data = await response.json();
+        setMembers(data);
       } catch (error) {
         console.error("❌ Error fetching members:", error);
       }
     };
-
     fetchMembers();
 
-    // ✅ เปิด WebSocket เพื่อฟังข้อมูลจากเซิร์ฟเวอร์
-    const ws = new WebSocket("wss://gym-management-m20js3uuh-benramajubs-projects.vercel.app");
+    // ✅ เปิด WebSocket เพื่อรับข้อมูลแบบเรียลไทม์
+    const ws = new WebSocket("ws://localhost:8080");
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -49,17 +48,9 @@ function AddFinger() {
           severity: "success",
         });
 
-        // 🔥 ลบสมาชิกที่ลงทะเบียนสำเร็จออกจากลิสต์
+        // 🔥 อัปเดตรายชื่อสมาชิกที่ยังไม่มีลายนิ้วมือ
         setMembers((prev) => prev.filter((member) => member.id !== data.memberId));
         setSelectedMemberId("");
-        setIsScanning(false);
-        setOpenDialog(false);
-      } else if (data.status === "error") {
-        setAlert({
-          open: true,
-          message: ` เกิดข้อผิดพลาด: ${data.message}`,
-          severity: "error",
-        });
         setIsScanning(false);
         setOpenDialog(false);
       }
@@ -76,30 +67,12 @@ function AddFinger() {
 
   const handleStartScan = async () => {
     if (!selectedMemberId) {
-      setAlert({ open: true, message: "กรุณาเลือกสมาชิกก่อนเริ่มการสแกน!", severity: "warning" });
+      setAlert({ open: true, message: "⚠️ กรุณาเลือกสมาชิกก่อนเริ่มการสแกน!", severity: "warning" });
       return;
     }
 
     setIsScanning(true);
     setOpenDialog(true);
-
-    try {
-      console.log("🔵 ส่งคำขอให้ ESP32 ลงทะเบียนสมาชิก:", selectedMemberId);
-      const response = await axios.post(`http://localhost:5000/fingerprint/request_enroll`, {
-        memberId: selectedMemberId,
-      });
-
-      console.log("📡 API Response:", response.data);
-
-      if (response.data.message) {
-        setAlert({ open: true, message: response.data.message, severity: "info" });
-      }
-    } catch (error) {
-      console.error(" Error sending fingerprint enroll request:", error);
-      setAlert({ open: true, message: " เกิดข้อผิดพลาดในการส่งคำขอ!", severity: "error" });
-      setIsScanning(false);
-      setOpenDialog(false);
-    }
   };
 
   return (
@@ -121,42 +94,11 @@ function AddFinger() {
         </Select>
       </FormControl>
 
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleStartScan}
-        disabled={isScanning || members.length === 0}
-        fullWidth
-      >
-        {isScanning ? (
-          <>
-            <CircularProgress size={24} style={{ marginRight: 10, color: "white" }} />
-            กำลังสแกน...
-          </>
-        ) : (
-          "เริ่มสแกนลายนิ้วมือ"
-        )}
+      <Button variant="contained" color="primary" onClick={handleStartScan} disabled={isScanning || members.length === 0} fullWidth>
+        {isScanning ? <CircularProgress size={24} style={{ marginRight: 10, color: "white" }} /> : "เริ่มสแกนลายนิ้วมือ"}
       </Button>
 
-      <Dialog open={openDialog} maxWidth="xs" fullWidth>
-        <DialogTitle align="center">กำลังสแกนลายนิ้วมือ</DialogTitle>
-        <DialogContent style={{ textAlign: "center", padding: "20px" }}>
-          <CircularProgress size={50} />
-          <p style={{ marginTop: "10px" }}>กรุณาวางนิ้วมือบนเครื่องสแกน...</p>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="secondary" disabled={isScanning}>
-            ยกเลิก
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={alert.open}
-        autoHideDuration={4000}
-        onClose={() => setAlert({ open: false, message: "", severity: "" })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
+      <Snackbar open={alert.open} autoHideDuration={4000} onClose={() => setAlert({ open: false, message: "", severity: "" })}>
         <Alert severity={alert.severity}>{alert.message}</Alert>
       </Snackbar>
     </Container>

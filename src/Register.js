@@ -41,7 +41,7 @@ export default function SignUp() {
       fname: data.get('firstName'),
       lname: data.get('lastName'),
     }
-    fetch('http://localhost:5000/Register', {
+    fetch('http://localhost:5000/api/Register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

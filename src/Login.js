@@ -12,7 +12,7 @@ import Grid from '@mui/material/Grid';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-
+import { useNavigate } from 'react-router-dom';
 function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
@@ -26,37 +26,41 @@ function Copyright(props) {
 const defaultTheme = createTheme();
 
 export default function SignInSide() {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const jsonData = {
-      Email: data.get('email'),
-      Password: data.get('password'),
-    }
 
+  
 
-    fetch('http://localhost:5000/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-         body: JSON.stringify(jsonData),
-      })
-        .then(Response => Response.json())
-        .then(data => {
+const navigate = useNavigate();
 
-         if( data.status === 'Ok'){
-            alert('Success')
-            localStorage.setItem('token', data.token)
-            window.location = '/'
-         }else{
-            alert('Failed')
-         }
-        })
-        .catch(error => {
-         console.log('Error', error);
-        }) ;
+const handleSubmit = (event) => {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const jsonData = {
+    Email: data.get('email'),
+    Password: data.get('password'),
   };
+
+  fetch('http://localhost:5000/api/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(jsonData),
+  })
+    .then(response => response.json())
+    .then((data) => {
+      if (data.status === 'Ok') {
+        alert('✅ Success');
+        localStorage.setItem('token', data.token);
+        navigate('/'); // ✅ ใช้ React Router
+      } else {
+        alert('❌ Failed: ' + data.message);
+      }
+    })
+    .catch((error) => {
+      console.error('❌ Error:', error);
+      alert('🚨 Login failed. Please try again.');
+    });
+};
 
   return (
     <ThemeProvider theme={defaultTheme}>
