@@ -1,167 +1,166 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
 import {
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
   Button,
-  Box,
+  Container,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Snackbar,
+  Alert,
+  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-} from '@mui/material';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+} from "@mui/material";
+import axios from "axios";
 
-// URL ของรูปภาพพื้นหลัง
-const backgroundImage = 'https://images.unsplash.com/photo-1517841905240-4729888e0b1e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&q=80&w=1080';
-
-const styles = {
-  background: {
-    backgroundImage: `url(${backgroundImage})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    minHeight: '100vh',
-    padding: '20px',
-    color: '#fff', // เปลี่ยนสีข้อความให้เข้ากับพื้นหลัง
-  },
-  card: {
-    borderRadius: '8px',
-    transition: '0.3s',
-    '&:hover': {
-      transform: 'scale(1.05)',
-    },
-  },
-};
-
-function Home() {
+function AddFinger() {
   const [members, setMembers] = useState([]);
-  const [goods, setGoods] = useState([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
+  const [alert, setAlert] = useState({ open: false, message: "", severity: "info" });
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
-    // ดึงข้อมูลสมาชิก
-    axios.get('http://localhost:5000/api/members').then((response) => {
-      setMembers(response.data);
-    });
+    const fetchMembers = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/members`);
+        setMembers(response.data);
+      } catch (error) {
+        console.error("❌ Error fetching members:", error);
+      }
+    };
 
-    
+    fetchMembers();
+
+    // ✅ เปิด WebSocket เพื่อฟังข้อมูลจากเซิร์ฟเวอร์
+    const ws = new WebSocket("wss://gym-management-m20js3uuh-benramajubs-projects.vercel.app");
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("📡 Received WebSocket data:", data);
+
+      if (data.status === "success") {
+        setAlert({
+          open: true,
+          message: `✅ ลงทะเบียนสำเร็จ! Fingerprint ID: ${data.fingerprintID}`,
+          severity: "success",
+        });
+
+        // 🔥 ลบสมาชิกที่ลงทะเบียนสำเร็จออกจากลิสต์
+        setMembers((prev) => prev.filter((member) => member.id !== data.memberId));
+        setSelectedMemberId("");
+        setIsScanning(false);
+        setOpenDialog(false);
+      } else if (data.status === "error") {
+        setAlert({
+          open: true,
+          message: ` เกิดข้อผิดพลาด: ${data.message}`,
+          severity: "error",
+        });
+        setIsScanning(false);
+        setOpenDialog(false);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
-  const handleOpenDialog = (member) => {
-    setSelectedMember(member);
-    setOpenDialog(true);
+  const handleSelectMember = (event) => {
+    setSelectedMemberId(event.target.value);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedMember(null);
+  const handleStartScan = async () => {
+    if (!selectedMemberId) {
+      setAlert({ open: true, message: "กรุณาเลือกสมาชิกก่อนเริ่มการสแกน!", severity: "warning" });
+      return;
+    }
+
+    setIsScanning(true);
+    setOpenDialog(true);
+
+    try {
+      console.log("🔵 ส่งคำขอให้ ESP32 ลงทะเบียนสมาชิก:", selectedMemberId);
+      const response = await axios.post(`http://localhost:5000/fingerprint/request_enroll`, {
+        memberId: selectedMemberId,
+      });
+
+      console.log("📡 API Response:", response.data);
+
+      if (response.data.message) {
+        setAlert({ open: true, message: response.data.message, severity: "info" });
+      }
+    } catch (error) {
+      console.error(" Error sending fingerprint enroll request:", error);
+      setAlert({ open: true, message: " เกิดข้อผิดพลาดในการส่งคำขอ!", severity: "error" });
+      setIsScanning(false);
+      setOpenDialog(false);
+    }
   };
 
   return (
-    <Container style={styles.background}>
-      <Typography variant="h4" gutterBottom style={{ textAlign: 'center' }}>
-        ยินดีต้อนรับสู่ระบบแลกสินค้า
-      </Typography>
+    <Container>
+      <h2>ลงทะเบียนลายนิ้วมือ</h2>
 
-      <Typography variant="h5" gutterBottom style={{ textAlign: 'center' }}>
-        ข้อมูลสมาชิก
-      </Typography>
-      <Grid container spacing={2}>
-        {members.map((member) => (
-          <Grid item xs={12} sm={6} md={4} key={member.id}>
-            <Card elevation={3} style={styles.card}>
-              <CardContent>
-                <Typography variant="h6">{member.firstName} {member.lastName}</Typography>
-                <Typography>โทรศัพท์: {member.phone}</Typography>
-                <Typography>แต้มสะสม: {member.points}</Typography>
-              </CardContent>
-              <CardActions>
-                <Button size="small" color="primary" onClick={() => handleOpenDialog(member)}>
-                  ดูข้อมูลสมาชิก
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Typography variant="h5" gutterBottom style={{ textAlign: 'center', color: '#3f51b5', marginTop: '20px' }}>
-        สินค้าที่สามารถแลกได้
-      </Typography>
-      <Grid container spacing={2}>
-        {goods.map((good) => (
-          <Grid item xs={12} sm={6} md={4} key={good.id}>
-            <Card elevation={3} style={{ borderRadius: '8px', transition: '0.3s', '&:hover': { transform: 'scale(1.05)' } }}>
-              <CardContent>
-                <Typography variant="h6">{good.name}</Typography>
-                <Typography>แต้มที่ต้องใช้: {good.pointsRequired}</Typography>
-              </CardContent>
-              <CardActions>
-                <Button size="small" color="primary">
-                  แลก
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Dialog สำหรับแสดงข้อมูลสมาชิก */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>ข้อมูลสมาชิก</DialogTitle>
-        <DialogContent>
-          {selectedMember && (
-            <Box>
-              <Typography variant="h6">{selectedMember.firstName} {selectedMember.lastName}</Typography>
-              <Typography>โทรศัพท์: {selectedMember.phone}</Typography>
-              <Typography>อีเมล: {selectedMember.email}</Typography>
-              <Typography>แต้มสะสม: {selectedMember.points}</Typography>
-              <Typography>ระยะเวลา: {selectedMember.duration} เดือน</Typography>
-              <Typography>วันที่เริ่มต้น: {new Date(selectedMember.startDate).toLocaleDateString()}</Typography>
-              <Typography>วันที่สิ้นสุด: {new Date(selectedMember.endDate).toLocaleDateString()}</Typography>
-              <Typography>สถานะ: {selectedMember.status}</Typography>
-            </Box>
+      <FormControl fullWidth margin="normal">
+        <InputLabel>เลือกสมาชิก</InputLabel>
+        <Select value={selectedMemberId} onChange={handleSelectMember}>
+          {members.length > 0 ? (
+            members.map((member) => (
+              <MenuItem key={member.id} value={member.id}>
+                {`${member.id} - ${member.firstName} ${member.lastName}`}
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled>ไม่มีสมาชิกที่สามารถลงทะเบียนได้</MenuItem>
           )}
+        </Select>
+      </FormControl>
+
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleStartScan}
+        disabled={isScanning || members.length === 0}
+        fullWidth
+      >
+        {isScanning ? (
+          <>
+            <CircularProgress size={24} style={{ marginRight: 10, color: "white" }} />
+            กำลังสแกน...
+          </>
+        ) : (
+          "เริ่มสแกนลายนิ้วมือ"
+        )}
+      </Button>
+
+      <Dialog open={openDialog} maxWidth="xs" fullWidth>
+        <DialogTitle align="center">กำลังสแกนลายนิ้วมือ</DialogTitle>
+        <DialogContent style={{ textAlign: "center", padding: "20px" }}>
+          <CircularProgress size={50} />
+          <p style={{ marginTop: "10px" }}>กรุณาวางนิ้วมือบนเครื่องสแกน...</p>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            ปิด
+          <Button onClick={() => setOpenDialog(false)} color="secondary" disabled={isScanning}>
+            ยกเลิก
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Typography variant="h5" gutterBottom style={{ textAlign: 'center', marginTop: '20px' }}>
-        คำแนะนำเกี่ยวกับฟิตเนส
-      </Typography>
-      <Box style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '8px' }}>
-        <Typography>
-          <FitnessCenterIcon style={{ verticalAlign: 'middle', marginRight: '8px' }} />
-          1. ออกกำลังกายอย่างน้อย 150 นาทีต่อสัปดาห์เพื่อสุขภาพที่ดี
-        </Typography>
-        <Typography>
-          <FitnessCenterIcon style={{ verticalAlign: 'middle', marginRight: '8px' }} />
-          2. รับประทานอาหารที่มีประโยชน์และหลากหลาย
-        </Typography>
-        <Typography>
-          <FitnessCenterIcon style={{ verticalAlign: 'middle', marginRight: '8px' }} />
-          3. ดื่มน้ำให้เพียงพอในแต่ละวัน
-        </Typography>
-        <Typography>
-          <FitnessCenterIcon style={{ verticalAlign: 'middle', marginRight: '8px' }} />
-          4. นอนหลับให้เพียงพอเพื่อฟื้นฟูร่างกาย
-        </Typography>
-        <Typography>
-          <FitnessCenterIcon style={{ verticalAlign: 'middle', marginRight: '8px' }} />
-          5. หลีกเลี่ยงการนั่งนาน ๆ และเคลื่อนไหวบ่อย ๆ
-        </Typography>
-      </Box>
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={4000}
+        onClose={() => setAlert({ open: false, message: "", severity: "" })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity={alert.severity}>{alert.message}</Alert>
+      </Snackbar>
     </Container>
   );
 }
 
-export default Home;
+export default AddFinger;

@@ -121,13 +121,14 @@ function PaymentSummary() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.entries(dailySummary).map(([date, totalAmount]) => (
-              <TableRow key={date}>
-                <TableCell>{date}</TableCell>
-              <TableCell>{totalAmount.toFixed(2)}</TableCell>
-            </TableRow>
-          ))}
-          </TableBody>
+  {Object.entries(dailySummary).map(([date, totalAmount]) => (
+    <TableRow key={date}>
+      <TableCell>{date}</TableCell>
+      <TableCell>{(parseFloat(totalAmount) || 0).toFixed(2)}</TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
         </Table>
       </TableContainer>
 
@@ -144,15 +145,15 @@ function PaymentSummary() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filterPaymentsByDate().map((payment) => (
-              <TableRow key={payment.id}>
-                <TableCell>{payment.id}</TableCell>
-                <TableCell>{payment.memberId}</TableCell>
-                <TableCell>{payment.amount.toFixed(2)}</TableCell>
-                <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+  {filterPaymentsByDate().map((payment) => (
+    <TableRow key={payment.id}>
+      <TableCell>{String(payment.id).slice(-4).padStart(4, '0')}</TableCell>
+      <TableCell>{payment.memberId}</TableCell>
+      <TableCell>{(parseFloat(payment.amount) || 0).toFixed(2)}</TableCell>
+      <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
+    </TableRow>
+  ))}
+</TableBody>
         </Table>
       </TableContainer>
     </Container>

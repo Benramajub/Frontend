@@ -43,7 +43,7 @@ function Navbar() {
     { text: 'Add Member', path: '/add-member', icon: <PeopleIcon /> },
     { text: 'Payment', path: '/payment', icon: <PaymentIcon /> },
     { text: 'Summary', path: '/summary', icon: <AssessmentIcon /> },
-    { text: 'goodss', path: '/goodss', icon: <AssessmentIcon /> },
+    { text: 'Reports', path: '/Reports', icon: <AssessmentIcon /> },
   ];
 
   return (

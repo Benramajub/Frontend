@@ -17,6 +17,7 @@ import {
   DialogTitle,
   MenuItem,
   Snackbar,
+  Alert,
 } from '@mui/material';
 
 function MemberList() {
@@ -33,7 +34,8 @@ function MemberList() {
   const [memberToDelete, setMemberToDelete] = useState(null);
   const membersPerPage = 10; // จำนวนสมาชิกต่อหน้า
   const [currentPage, setCurrentPage] = useState(0); // สำหรับการแบ่งหน้า
-  
+// ✨ เพิ่ม state สำหรับ Snackbar
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const durations = Array.from({ length: 12 }, (_, i) => i + 1); // รายเดือน (1-12 เดือน)
   const discountOptions = Array.from({ length: 10 }, (_, i) => (i + 1) * 10); // ส่วนลด 10% - 100%
 
@@ -83,7 +85,11 @@ function MemberList() {
   };
 
   const handleEdit = (member) => {
-    setEditMember({ ...member, duration: '' }); // รีเซ็ต duration เป็นค่าว่าง
+    setEditMember({
+      ...member,
+      duration: '', // รีเซ็ต duration เป็นค่าว่าง
+      basePoints: member.points, // ✅ เก็บค่า points เดิมไว้เป็นฐาน
+    });
     setSelectedDiscount(0); // รีเซ็ตส่วนลด
     setError(''); // ล้างข้อความแจ้งเตือน
     setOpenEditDialog(true);
@@ -98,97 +104,101 @@ function MemberList() {
   };
 
   const calculateEndDate = (startDate, duration) => {
-    if (!startDate || !duration) return '';
+    if (!startDate || !duration || isNaN(duration)) return '';
     const startDateObj = new Date(startDate);
     startDateObj.setMonth(startDateObj.getMonth() + parseInt(duration, 10));
     return startDateObj.toISOString().split('T')[0];
   };
+  
 
   const handleFieldChange = (e) => {
-  const { name, value } = e.target;
-
-  if (name === 'duration') {
-    const duration = value === '' ? '' : parseInt(value, 10); // ตรวจสอบค่าว่าง
-    const basePrice = duration ? duration * 900 : 0; // ราคาเต็ม
-    const discountAmount = (selectedDiscount / 100) * basePrice;
-
-    setEditMember((prev) => ({
-      ...prev,
-      duration,
-      price: basePrice,
-      discountedPrice: basePrice - discountAmount, // ราคาหลังลด
-      points: prev.points + (duration ? duration * 10 : 0), // เพิ่มแต้มใหม่
-      endDate: duration ? calculateEndDate(prev.startDate, duration) : '', // คำนวณ endDate
-    }));
-  } else if (name === 'startDate') {
-    const newEndDate = calculateEndDate(value, editMember.duration);
-    setEditMember((prev) => ({
-      ...prev,
-      startDate: value,
-      endDate: newEndDate,
-    }));
-  }
-};
+    const { name, value } = e.target;
+  
+    if (name === 'duration') {
+      const duration = value === '' ? '' : parseInt(value, 10); // ตรวจสอบค่าว่าง
+      const basePrice = duration ? duration * 900 : 0; // ราคาเต็ม
+      const discountAmount = (selectedDiscount / 100) * basePrice;
+  
+      setEditMember((prev) => ({
+        ...prev,
+        duration,
+        price: basePrice,
+        discountedPrice: basePrice - discountAmount, // ราคาหลังลด
+        points: prev.basePoints + (duration ? duration * 10 : 0), // ✅ ใช้ค่าเก่าจากฐาน + duration ใหม่
+        endDate: duration ? calculateEndDate(prev.startDate, duration) : '', // คำนวณ endDate
+      }));
+    } else if (name === 'startDate') {
+      const newEndDate = calculateEndDate(value, editMember.duration);
+      setEditMember((prev) => ({
+        ...prev,
+        startDate: value,
+        endDate: newEndDate,
+      }));
+    }
+  };
 
   const handleDiscountChange = (e) => {
     const discount = parseInt(e.target.value, 10);
     const basePrice = editMember.duration * 900;
-    const requiredPoints = discount * 10; // แต้มที่ต้องใช้ตามส่วนลด
+    const requiredPoints = discount * 10;
     const discountAmount = (discount / 100) * basePrice;
 
-    setEditMember((prev) => {
-      if (prev.points < requiredPoints) {
-        setError('Point ไม่พอ');
+    if (editMember.points < requiredPoints) {
+        setSnackbar({ open: true, message: ' แต้มไม่พอสำหรับส่วนลดนี้!', severity: 'warning' });
         setSelectedDiscount(0);
-        return { ...prev, discountedPrice: basePrice }; // ราคากลับไปก่อนลด
-      } else {
-        setError('');
-        setSelectedDiscount(discount);
-        return {
-          ...prev,
-          discountedPrice: basePrice - discountAmount, // ราคาหลังลด
-          points: prev.points - requiredPoints, // ตัดแต้ม
-        };
-      }
-    });
-  };
+        return;
+    }
 
-  const handleSaveEdit = async () => {
-    try {
-      // สร้างอ็อบเจ็กต์สมาชิกที่อัปเดต
+    setSelectedDiscount(discount);
+    setEditMember((prev) => ({
+      ...prev,
+      discountedPrice: basePrice - discountAmount,
+      points: prev.points - requiredPoints,
+    }));
+};
+  
+
+const handleSaveEdit = async () => {
+  try {
       const updatedMember = {
-        id: editMember.id,
-        firstName: editMember.firstName,
-        lastName: editMember.lastName,
-        phone: editMember.phone,
-        email: editMember.email,
-        points: editMember.points,
-        duration: editMember.duration,
-        startDate: editMember.startDate,
-        endDate: editMember.endDate,
-        status: 'Inactive', // เปลี่ยนสถานะเป็น Inactive
-        originalPrice: editMember.discountedPrice ? editMember.discountedPrice : editMember.price, // ใช้ discountedPrice ถ้ามีการใช้ส่วนลด
+          id: editMember.id,
+          firstName: editMember.firstName,
+          lastName: editMember.lastName,
+          phone: editMember.phone,
+          email: editMember.email,
+          points: editMember.points,
+          duration: editMember.duration,
+          startDate: editMember.startDate,
+          endDate: editMember.endDate,
+          status: 'Inactive',
+          originalPrice: editMember.discountedPrice ? editMember.discountedPrice : editMember.price,
       };
-  
-      // ส่งข้อมูลที่อัปเดตไปยังเซิร์ฟเวอร์
+
+      if (editMember.age !== undefined) {
+          updatedMember.age = editMember.age;
+      }
+
       await axios.put(`http://localhost:5000/api/members/${editMember.id}`, updatedMember);
-  
-      // รีเฟรชตารางข้อมูลสมาชิก
+
       const response = await axios.get('http://localhost:5000/api/members');
       setMembers(response.data);
       setFilteredMembers(response.data);
-  
-      setAlert(true);
-      setTimeout(() => setAlert(false), 3000);
+
+      setSnackbar({ open: true, message: ' ข้อมูลถูกอัปเดตเรียบร้อย!', severity: 'success' });
       setOpenEditDialog(false);
       setEditMember(null);
-    } catch (error) {
+  } catch (error) {
       console.error('Error updating member:', error);
+  }
+};
+  
+  
+  
+  useEffect(() => {
+    if (currentPage * membersPerPage >= filteredMembers.length) {
+      setCurrentPage(0); // รีเซ็ตเป็นหน้าแรกถ้าหน้าปัจจุบันไม่มีข้อมูล
     }
-  };
-  
-  
-  
+  }, [filteredMembers]);
   
   
 
@@ -197,17 +207,17 @@ function MemberList() {
   // ฟังก์ชันลบสมาชิก
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/members/${memberToDelete.id}`);
-      setMembers((prev) => prev.filter((member) => member.id !== memberToDelete.id));
-      setFilteredMembers((prev) => prev.filter((member) => member.id !== memberToDelete.id));
-      setAlert(true);
-      setTimeout(() => setAlert(false), 3000);
-      setOpenDeleteDialog(false);
-      setMemberToDelete(null);
+        await axios.delete(`http://localhost:5000/api/members/${memberToDelete.id}`);
+        setMembers((prev) => prev.filter((member) => member.id !== memberToDelete.id));
+        setFilteredMembers((prev) => prev.filter((member) => member.id !== memberToDelete.id));
+
+        setSnackbar({ open: true, message: ' ลบสมาชิกสำเร็จ!', severity: 'error' });
+        setOpenDeleteDialog(false);
+        setMemberToDelete(null);
     } catch (error) {
-      console.error('Error deleting member:', error);
+        console.error('Error deleting member:', error);
     }
-  };
+};
 
   const handleOpenDeleteDialog = (member) => {
     setMemberToDelete(member);
@@ -393,7 +403,7 @@ function MemberList() {
           <Button onClick={handleCloseEditDialog} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleSaveEdit} color="primary" disabled={!!error}>
+          <Button onClick={handleSaveEdit} color="primary" >
             Save
           </Button>
         </DialogActions>
@@ -426,7 +436,17 @@ function MemberList() {
         </Button>
       </div>
 
-      <Snackbar open={alert} message="Member updated successfully" />
+      
+<Snackbar
+  open={snackbar.open}
+  autoHideDuration={3000}
+  onClose={() => setSnackbar({ ...snackbar, open: false })}
+  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+>
+  <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+    {snackbar.message}
+  </Alert>
+</Snackbar>
     </Container>
   );
 }

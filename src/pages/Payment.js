@@ -18,16 +18,18 @@ import {
 } from '@mui/material';
 
 function Payment() {
+  const [paymentType, setPaymentType] = useState('payment1');
   const [payment, setPayment] = useState({
     memberId: '',
+    name: '',
     amount: '',
-    date: '',
+    date: new Date().toISOString().split('T')[0], // ล็อกวันที่ปัจจุบัน
   });
   const [members, setMembers] = useState([]);
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
 
-  // ดึงข้อมูล Member จาก API
   useEffect(() => {
     axios.get('http://localhost:5000/api/members').then((response) => {
       setMembers(response.data);
@@ -36,56 +38,66 @@ function Payment() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // กรณีเลือก Member ID
-    if (name === 'memberId') {
+    
+    if (paymentType === 'payment1' && name === 'memberId') {
       const selectedMember = members.find((member) => member.id === value);
-
-      // อัปเดต Amount อัตโนมัติจาก Member
       setPayment({
         ...payment,
         memberId: value,
-        amount: selectedMember ? selectedMember.originalPrice : '', // ค่า defaultAmount จาก API
+        amount: selectedMember ? selectedMember.originalPrice : '',
       });
+    } else if (paymentType === 'payment2' && name === 'name') {
+      setPayment({ ...payment, name: value, amount: '100' }); // Payment2 ใช้ราคา 100 บาท
     } else {
       setPayment({ ...payment, [name]: value });
     }
   };
 
   const handleDialogOpen = () => {
-    // ตรวจสอบข้อมูลการชำระเงิน
-    if (!payment.memberId || !payment.amount || !payment.date) {
-      setAlert({ open: true, message: 'กรุณากรอกข้อมูลการชำระเงินให้ครบถ้วน!', severity: 'error' });
+    if ((paymentType === 'payment1' && (!payment.memberId || !payment.amount)) ||
+        (paymentType === 'payment2' && !payment.name)) {
+      setAlert({ open: true, message: 'กรุณากรอกข้อมูลให้ครบถ้วน!', severity: 'error' });
       return;
     }
-    setIsDialogOpen(true); // เปิดหน้าต่างยืนยัน
+    setIsDialogOpen(true);
   };
 
   const handleDialogClose = () => {
-    setIsDialogOpen(false); // ปิดหน้าต่างยืนยัน
+    setIsDialogOpen(false);
   };
 
   const handleConfirmPayment = async () => {
     try {
-      // ปิด Dialog
       setIsDialogOpen(false);
+      let successMessage = 'ชำระเงินเรียบร้อย!';
+      
+      if (paymentType === 'payment1') {
+        // 📌 **API ชำระเงินของ Payment1**
+        await axios.post('http://localhost:5000/api/payments', {
+          memberId: payment.memberId,
+          amount: payment.amount,
+          date: payment.date
+        });
 
-      // ส่งข้อมูลการชำระเงิน
-      await axios.post('http://localhost:5000/api/payments', payment);
+      } else if (paymentType === 'payment2') {
+        // 📌 **API ชำระเงินของ Payment2 และสร้างรหัส**
+        const response = await axios.post('http://localhost:5000/api/dailymembers', {
+          name: payment.name
+        });
 
-      // แจ้งเตือนสำเร็จ
-      setAlert({ open: true, message: 'ชำระเงินเรียบร้อยแล้ว!', severity: 'success' });
+        successMessage += ` รหัสปลดล็อกของคุณ: ${response.data.code}`;
+        setGeneratedCode(response.data.code);
+      }
 
-      // อัปเดตข้อมูลสมาชิกใหม่ใน MemberList
-      const response = await axios.get('http://localhost:5000/api/members');
-      setMembers(response.data);
+      setAlert({ open: true, message: successMessage, severity: 'success' });
 
-      // รีเซ็ตข้อมูลการชำระเงิน
       setPayment({
         memberId: '',
+        name: '',
         amount: '',
-        date: '',
+        date: new Date().toISOString().split('T')[0],
       });
+
     } catch (error) {
       console.error('Error processing payment:', error);
       setAlert({ open: true, message: 'เกิดข้อผิดพลาดในการชำระเงิน!', severity: 'error' });
@@ -95,72 +107,63 @@ function Payment() {
   return (
     <Container>
       <h2>Payment</h2>
+
       <FormControl fullWidth margin="normal">
-        <InputLabel>Member ID</InputLabel>
-        <Select
-          name="memberId"
-          value={payment.memberId}
-          onChange={handleChange}
-        >
-          {members.map((member) => (
-            <MenuItem key={member.id} value={member.id}>
-              {`${member.id} - ${member.firstName} ${member.lastName}`}
-            </MenuItem>
-          ))}
+        <InputLabel>ประเภทการชำระเงิน</InputLabel>
+        <Select value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
+          <MenuItem value="payment1">Payment 1 (ระบบเดิม)</MenuItem>
+          <MenuItem value="payment2">Payment 2 (ปลดล็อกประตู)</MenuItem>
         </Select>
       </FormControl>
-      <TextField
-        name="amount"
-        label="Amount"
-        fullWidth
-        margin="normal"
-        value={payment.amount}
-        InputProps={{
-          readOnly: true, // ทำให้ Amount เป็นช่องที่อ่านได้อย่างเดียว
-        }}
-      />
-      <TextField
-        name="date"
-        label="Date"
-        type="date"
-        InputLabelProps={{ shrink: true }}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-        value={payment.date}
-      />
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleDialogOpen} // เปิดหน้าต่างยืนยัน
-      >
-        Process Payment
+
+      {paymentType === 'payment1' ? (
+        <>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Member ID</InputLabel>
+            <Select name="memberId" value={payment.memberId} onChange={handleChange}>
+              {members.map((member) => (
+                <MenuItem key={member.id} value={member.id}>
+                  {`${member.id} - ${member.firstName} ${member.lastName}`}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField name="amount" label="Amount" fullWidth margin="normal" value={payment.amount} InputProps={{ readOnly: true }} />
+        </>
+      ) : (
+        <>
+          <TextField name="name" label="ชื่อผู้ใช้" fullWidth margin="normal" value={payment.name} onChange={handleChange} />
+          <TextField name="amount" label="Amount" fullWidth margin="normal" value="100" InputProps={{ readOnly: true }} />
+        </>
+      )}
+
+      <TextField name="date" label="Date" type="date" fullWidth margin="normal" value={payment.date} InputProps={{ readOnly: true }} />
+
+      <Button variant="contained" color="primary" onClick={handleDialogOpen}>
+        {paymentType === 'payment1' ? 'Process Payment' : 'Generate Unlock Code & Pay'}
       </Button>
 
-      {/* Dialog สำหรับยืนยันการชำระเงิน */}
-      <Dialog
-        open={isDialogOpen}
-        onClose={handleDialogClose}
-        aria-labelledby="dialog-title"
-        aria-describedby="dialog-description"
-      >
-        <DialogTitle id="dialog-title">ยืนยันการชำระเงิน</DialogTitle>
+      <Dialog open={isDialogOpen} onClose={handleDialogClose}>
+        <DialogTitle>ยืนยันการชำระเงิน</DialogTitle>
         <DialogContent>
-          <DialogContentText id="dialog-description">
-            คุณต้องการยืนยันการชำระเงินนี้ใช่หรือไม่?
+          <DialogContentText>
+            {paymentType === 'payment1'
+              ? 'คุณต้องการยืนยันการชำระเงินนี้ใช่หรือไม่?'
+              : 'คุณต้องการสร้างรหัสปลดล็อกและยืนยันการชำระเงินนี้ใช่หรือไม่?'}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogClose} color="secondary">
-            ยกเลิก
-          </Button>
-          <Button onClick={handleConfirmPayment} color="primary" variant="contained">
-            ยืนยัน
-          </Button>
+          <Button onClick={handleDialogClose} color="secondary">ยกเลิก</Button>
+          <Button onClick={handleConfirmPayment} color="primary" variant="contained">ยืนยัน</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar แจ้งเตือน */}
+      {generatedCode && paymentType === 'payment2' && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          รหัสปลดล็อกของคุณ: <strong>{generatedCode}</strong> (ใช้ได้ 2 ครั้ง)
+        </Alert>
+      )}
+
       <Snackbar
         open={alert.open}
         autoHideDuration={3000}

@@ -100,7 +100,6 @@ function AddMember() {
         email: '',
         duration: '',
         originalPrice: 0,
-        finalPrice: 0,
         points: 0,
         discount: 0,
         startDate: '',
@@ -176,14 +175,7 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
-      <TextField
-        name="finalPrice"
-        label="Final Price"
-        value={member.finalPrice}
-        disabled
-        fullWidth
-        margin="normal"
-      />
+
       <TextField
         name="points"
         label="Points"

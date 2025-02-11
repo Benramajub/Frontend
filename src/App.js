@@ -8,6 +8,7 @@ import Summary from './pages/Summary';
 import EditMember from './pages/EditMember';
 import Home from './pages/Home';
 import Login from './Login.js'
+import Reports from './pages/Reports.js'
 
 import Register from './Register.js'
 
@@ -25,7 +26,7 @@ function App() {
         <Route path="/summary" element={<Summary />} />
         <Route path="/home" element={<Home />} />
         <Route path="/edit-member/:id" element={<EditMember />} />
-
+        <Route path="/Reports" element={<Reports />} />
       </Routes>
     </Router>
   );
