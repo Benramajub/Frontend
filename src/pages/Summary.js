@@ -9,56 +9,75 @@ ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, T
 
 function PaymentSummary() {
   const [payments, setPayments] = useState([]);
+  const [dailyMembers, setDailyMembers] = useState([]); // ✅ ข้อมูลจาก /api/dailymembers
   const [dailySummary, setDailySummary] = useState({});
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [totalAmount, setTotalAmount] = useState(0); // ✅ ตัวแปรสรุปยอดรวมทั้งหมด
 
   // ดึงข้อมูลจาก API
   useEffect(() => {
+    // ดึงข้อมูล payment
     axios.get('http://localhost:5000/api/payments')
       .then((response) => {
         setPayments(response.data);
-        calculateDailySummary(response.data);
+        calculateDailySummary(response.data, dailyMembers);
       })
       .catch((error) => {
         console.error("Error fetching payments data:", error);
       });
+
+    // ดึงข้อมูลจาก /api/dailymembers
+    axios.get('http://localhost:5000/api/dailymembers')
+      .then((response) => {
+        setDailyMembers(response.data);
+        calculateDailySummary(payments, response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching daily members data:", error);
+      });
   }, []);
 
   // คำนวณยอดรวมรายวัน
-  const calculateDailySummary = (payments) => {
+  const calculateDailySummary = (payments, dailyMembers) => {
     let summary = {};
+    let total = 0; // ✅ ตัวแปรสำหรับเก็บยอดรวมทั้งหมด
 
+    // รวม payment ปกติ
     payments.forEach((payment) => {
-      const date = new Date(payment.date).toLocaleDateString(); // ทำให้วันที่เป็นรูปแบบที่สามารถใช้เป็น key ได้
+      const date = new Date(payment.date).toLocaleDateString();
+      if (!summary[date]) summary[date] = 0;
+      summary[date] += parseFloat(payment.amount);
+      total += parseFloat(payment.amount);
+    });
 
-      if (!summary[date]) {
-        summary[date] = 0;
-      }
-
-      summary[date] += parseFloat(payment.amount); // รวมยอด
+    // รวม amount จาก /api/dailymembers
+    dailyMembers.forEach((member) => {
+      const date = new Date(member.date).toLocaleDateString();
+      if (!summary[date]) summary[date] = 0;
+      summary[date] += parseFloat(member.amount);
+      total += parseFloat(member.amount);
     });
 
     setDailySummary(summary);
+    setTotalAmount(total); // ✅ อัปเดตยอดรวมทั้งหมด
   };
 
   // ฟังก์ชันกรองข้อมูลตามวันที่ที่เลือก
   const filterPaymentsByDate = () => {
-    if (!startDate || !endDate) return payments;
+    if (!startDate || !endDate) return payments.concat(dailyMembers);
 
-    const filteredPayments = payments.filter(payment => {
-      const paymentDate = new Date(payment.date);
-      return paymentDate >= new Date(startDate) && paymentDate <= new Date(endDate);
+    return payments.concat(dailyMembers).filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
     });
-
-    return filteredPayments;
   };
 
   // คำนวณยอดรวมใหม่หลังจากกรองวันที่
   useEffect(() => {
-    const filteredPayments = filterPaymentsByDate();
-    calculateDailySummary(filteredPayments);
-  }, [startDate, endDate, payments]);
+    const filteredData = filterPaymentsByDate();
+    calculateDailySummary(filteredData, filteredData);
+  }, [startDate, endDate, payments, dailyMembers]);
 
   // การเตรียมข้อมูลกราฟ
   const chartData = {
@@ -121,14 +140,13 @@ function PaymentSummary() {
             </TableRow>
           </TableHead>
           <TableBody>
-  {Object.entries(dailySummary).map(([date, totalAmount]) => (
-    <TableRow key={date}>
-      <TableCell>{date}</TableCell>
-      <TableCell>{(parseFloat(totalAmount) || 0).toFixed(2)}</TableCell>
-    </TableRow>
-  ))}
-</TableBody>
-
+            {Object.entries(dailySummary).map(([date, totalAmount]) => (
+              <TableRow key={date}>
+                <TableCell>{date}</TableCell>
+                <TableCell>{(parseFloat(totalAmount) || 0).toFixed(2)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
         </Table>
       </TableContainer>
 
@@ -145,15 +163,23 @@ function PaymentSummary() {
             </TableRow>
           </TableHead>
           <TableBody>
-  {filterPaymentsByDate().map((payment) => (
-    <TableRow key={payment.id}>
-      <TableCell>{String(payment.id).slice(-4).padStart(4, '0')}</TableCell>
-      <TableCell>{payment.memberId}</TableCell>
-      <TableCell>{(parseFloat(payment.amount) || 0).toFixed(2)}</TableCell>
-      <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
-    </TableRow>
-  ))}
-</TableBody>
+            {filterPaymentsByDate().map((item, index) => (
+              <TableRow key={index}>
+                <TableCell>{item.id ? String(item.id).slice(-1).padStart(4, '0') : '-'}</TableCell>
+                <TableCell>{item.memberId || '-'}</TableCell>
+                <TableCell>{(parseFloat(item.amount) || 0).toFixed(2)}</TableCell>
+                <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          {/* ✅ แสดงยอดรวมด้านล่างตาราง */}
+          <TableBody>
+            <TableRow>
+              <TableCell colSpan={2} style={{ fontWeight: 'bold', textAlign: 'right' }}>Total:</TableCell>
+              <TableCell style={{ fontWeight: 'bold' }}>{totalAmount.toFixed(2)}</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          </TableBody>
         </Table>
       </TableContainer>
     </Container>

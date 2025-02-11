@@ -25,6 +25,7 @@ function MemberList() {
   const [payments, setPayments] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMembers, setFilteredMembers] = useState([]);
+
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editMember, setEditMember] = useState(null);
   const [selectedDiscount, setSelectedDiscount] = useState(0);
@@ -38,7 +39,11 @@ function MemberList() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const durations = Array.from({ length: 12 }, (_, i) => i + 1); // รายเดือน (1-12 เดือน)
   const discountOptions = Array.from({ length: 10 }, (_, i) => (i + 1) * 10); // ส่วนลด 10% - 100%
-
+  const [dailymembers, setDailyMembers] = useState([]); // 🌟 เพิ่ม state สำหรับสมาชิกรายวัน
+  const [viewMode, setViewMode] = useState('monthly'); // 🌟 เพิ่ม state ควบคุมหน้า
+  const [dailyPage, setDailyPage] = useState(0); // 🌟 หน้าของสมาชิกรายวัน
+  const [filteredDailyMembers, setFilteredDailyMembers] = useState([]); // 🌟 เพิ่ม state สำหรับค้นหาสมาชิกรายวัน
+  const [dailySearchQuery, setDailySearchQuery] = useState(''); // 🌟 แยก state ค้นหาสมาชิกรายวัน
   useEffect(() => {
     axios.get('http://localhost:5000/api/members').then((response) => {
       setMembers(response.data);
@@ -48,6 +53,11 @@ function MemberList() {
     axios.get('http://localhost:5000/api/payments').then((response) => {
       setPayments(response.data);
     });
+    axios.get('http://localhost:5000/api/dailymembers').then((response) => {
+      setDailyMembers(response.data);
+      setFilteredDailyMembers(response.data); // 🌟 ตั้งค่าข้อมูลกรองเริ่มต้น
+    });
+ 
 
     
   }, []);
@@ -72,17 +82,8 @@ function MemberList() {
     return 'Inactive';
   };
 
-  const handleSearch = () => {
-    const query = searchQuery.toLowerCase();
-    const results = members.filter(
-      (member) =>
-        member.firstName.toLowerCase().includes(query) ||
-        member.lastName.toLowerCase().includes(query) ||
-        member.phone.includes(query) ||
-        member.email.toLowerCase().includes(query)
-    );
-    setFilteredMembers(results);
-  };
+  
+
 
   const handleEdit = (member) => {
     setEditMember({
@@ -136,6 +137,41 @@ function MemberList() {
       }));
     }
   };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+        // 🌟 ถ้าไม่มีค่าค้นหา รีเซ็ตข้อมูลทั้งหมด
+        if (viewMode === 'monthly') {
+            setFilteredMembers(members);
+        } else {
+            setFilteredDailyMembers(dailymembers);
+        }
+        return;
+    }
+
+    try {
+        let response;
+        if (viewMode === 'monthly') {
+            // 🔍 ค้นหาสมาชิกรายเดือน
+            response = await axios.get(`http://localhost:5000/api/member/search?q=${searchQuery}`);
+            setFilteredMembers(response.data);
+        } else {
+            // 🔍 ค้นหาสมาชิกรายวัน
+            response = await axios.get(`http://localhost:5000/api/dailymembers/search?q=${searchQuery}`);
+            setFilteredDailyMembers(response.data);
+        }
+    } catch (error) {
+        console.error("❌ Error fetching search results:", error);
+        if (viewMode === 'monthly') {
+            setFilteredMembers([]);
+        } else {
+            setFilteredDailyMembers([]);
+        }
+    }
+};
+
+
+
 
   const handleDiscountChange = (e) => {
     const discount = parseInt(e.target.value, 10);
@@ -246,54 +282,82 @@ const handleSaveEdit = async () => {
     (currentPage + 1) * membersPerPage
   );
 
+const paginatedDailyMembers = dailymembers.slice(
+    dailyPage * membersPerPage,
+    (dailyPage + 1) * membersPerPage
+  );
 
   return (
-    <Container>
-    <h2>Member List</h2>
-   
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-        <TextField
-          label="Search Member"
-          variant="outlined"
-          fullWidth
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <Button variant="contained" color="primary" onClick={handleSearch}>
-          Search
+      <Container>
+      <h2>Member List</h2>
+
+      {/* 🌟 ปุ่มเปลี่ยนระหว่าง "สมาชิกรายเดือน" และ "สมาชิกรายวัน" */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        <Button
+          variant={viewMode === 'monthly' ? 'contained' : 'outlined'}
+          color="primary"
+          onClick={() => setViewMode('monthly')}
+        >
+          สมาชิกรายเดือน
+        </Button>
+        <Button
+          variant={viewMode === 'daily' ? 'contained' : 'outlined'}
+          color="secondary"
+          onClick={() => setViewMode('daily')}
+        >
+          สมาชิกรายวัน
         </Button>
       </div>
+{/* 🌟 ช่องค้นหาที่ใช้ร่วมกัน */}
+<div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+    <TextField
+        label={viewMode === 'monthly' ? "Search Monthly Member" : "Search Daily Member"}
+        variant="outlined"
+        fullWidth
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+    />
+    <Button variant="contained" color="primary" onClick={handleSearch}>
+        Search
+    </Button>
+</div>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>First Name</TableCell>
-              <TableCell>Last Name</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Duration</TableCell>
-              <TableCell>Points</TableCell>
-              <TableCell>Start Date</TableCell>
-              <TableCell>End Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedMembers.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>{member.id}</TableCell>
-                <TableCell>{member.firstName}</TableCell>
-                <TableCell>{member.lastName}</TableCell>
-                <TableCell>{member.phone}</TableCell>
-                <TableCell>{member.duration}</TableCell>
-                <TableCell>{member.points}</TableCell>
-                <TableCell>{new Date(member.startDate).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(member.endDate).toLocaleDateString()}</TableCell>
-                <TableCell>{getStatus(member)}</TableCell>
-                <TableCell>
-                  <Button
+      {/* 🌟 ตารางสมาชิกรายเดือน */}
+      {viewMode === 'monthly' && (
+        <>
+      
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>First Name</TableCell>
+                  <TableCell>Last Name</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Duration</TableCell>
+                  <TableCell>Points</TableCell>
+                  <TableCell>Start Date</TableCell>
+                  <TableCell>End Date</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredMembers
+                  .slice(currentPage * membersPerPage, (currentPage + 1) * membersPerPage)
+                  .map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell>{member.id}</TableCell>
+                      <TableCell>{member.firstName}</TableCell>
+                      <TableCell>{member.lastName}</TableCell>
+                      <TableCell>{member.phone}</TableCell>
+                      <TableCell>{member.duration}</TableCell>
+                      <TableCell>{member.points}</TableCell>
+                      <TableCell>{new Date(member.startDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(member.endDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{getStatus(member)}</TableCell>
+                      <TableCell>
+                      <Button
                     variant="contained"
                     color="primary"
                     onClick={() => handleEdit(member)}
@@ -308,12 +372,51 @@ const handleSaveEdit = async () => {
                   >
                     Delete
                   </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
+      )}
+
+      {/* 🌟 ตารางสมาชิกรายวัน */}
+            {/* 🌟 ตารางสมาชิกรายวัน */}
+            {viewMode === 'daily' && (
+        <>
+    
+
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Code</TableCell>
+                  <TableCell>Uses Remaining</TableCell>
+                  <TableCell>Date</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+              {filteredDailyMembers.slice(dailyPage * membersPerPage, (dailyPage + 1) * membersPerPage)
+                  .map((member) => (
+    <TableRow key={member.id}>
+      <TableCell>{member.id}</TableCell>
+      <TableCell>{member.name}</TableCell>
+      <TableCell>{member.amount}</TableCell>
+      <TableCell>{member.code}</TableCell>
+      <TableCell>{member.uses_remaining}</TableCell>
+      <TableCell>{new Date(member.date).toLocaleDateString()}</TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
+            </Table>
+          </TableContainer>
+        </>
+      )}
 
 
       <Dialog open={openEditDialog} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
@@ -424,13 +527,27 @@ const handleSaveEdit = async () => {
         </DialogActions>
       </Dialog>
 
-      <div>
-        <Button onClick={handlePreviousPage} disabled={currentPage === 0}>
+      {/* 🌟 ปุ่มเปลี่ยนหน้า (ใช้ได้ทั้งสองหน้า) */}
+      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+        <Button
+          onClick={() => {
+            if (viewMode === 'monthly') setCurrentPage((prev) => Math.max(prev - 1, 0));
+            else setDailyPage((prev) => Math.max(prev - 1, 0));
+          }}
+          disabled={viewMode === 'monthly' ? currentPage === 0 : dailyPage === 0}
+        >
           Previous
         </Button>
         <Button
-          onClick={handleNextPage}
-          disabled={(currentPage + 1) * membersPerPage >= filteredMembers.length}
+          onClick={() => {
+            if (viewMode === 'monthly') setCurrentPage((prev) => prev + 1);
+            else setDailyPage((prev) => prev + 1);
+          }}
+          disabled={
+            viewMode === 'monthly'
+              ? (currentPage + 1) * membersPerPage >= filteredMembers.length
+              : (dailyPage + 1) * membersPerPage >= dailymembers.length
+          }
         >
           Next
         </Button>
