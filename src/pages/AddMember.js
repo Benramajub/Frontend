@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Container,
@@ -10,45 +10,60 @@ import {
 
 function AddMember() {
   const [member, setMember] = useState({
+    id: 1, // ค่าเริ่มต้น
     firstName: '',
     lastName: '',
     age: '',
     phone: '',
     email: '',
     duration: '',
-    originalPrice: 0, // ราคาเต็มก่อนลด
-    finalPrice: 0, // ราคาหลังลด
+    originalPrice: 0,
+    finalPrice: 0,
     points: 0,
     discount: 0,
     startDate: '',
     endDate: '',
   });
-  const [usePoints, setUsePoints] = useState(false); // ใช้แต้มส่วนลดหรือไม่
+
+  const [usePoints, setUsePoints] = useState(false);
   const [alert, setAlert] = useState(false);
 
   // รายเดือน (1-12 เดือน)
   const durations = Array.from({ length: 12 }, (_, i) => i + 1);
 
-  // ฟังก์ชันคำนวณวันหมดอายุ
+  // ฟังก์ชันดึง ID สมาชิกล่าสุด
+  useEffect(() => {
+    axios.get("http://localhost:5000/api/members/latestId")
+      .then((response) => {
+        setMember((prev) => ({ ...prev, id: response.data.latestId })); // ใช้ ID ที่ได้จาก backend
+      })
+      .catch((error) => {
+        console.error("Error fetching latest member ID:", error);
+      });
+  }, []);
+  
+  
+  
+  
+
   const calculateEndDate = (start, months) => {
     if (!start || !months) return '';
     const startDateObj = new Date(start);
     startDateObj.setMonth(startDateObj.getMonth() + parseInt(months));
-    return startDateObj.toISOString().split('T')[0]; // คืนค่าในรูปแบบ YYYY-MM-DD
+    return startDateObj.toISOString().split('T')[0];
   };
 
-  // ฟังก์ชันสำหรับการเปลี่ยนค่า
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === 'duration') {
       const duration = parseInt(value, 10);
-      const originalPrice = duration * 900; // ราคาเต็ม 900 บาทต่อเดือน
-      const points = duration * 10; // แต้ม 10 ต่อเดือน
-
+      const originalPrice = duration * 900;
+      const points = duration * 10;
       let discount = 0;
+
       if (usePoints && points >= 100) {
-        discount = originalPrice * 0.1; // ส่วนลด 10%
+        discount = originalPrice * 0.1;
       }
 
       const finalPrice = originalPrice - discount;
@@ -60,19 +75,18 @@ function AddMember() {
         finalPrice,
         points,
         discount,
-        endDate: calculateEndDate(prev.startDate, duration), // คำนวณ End Date
+        endDate: calculateEndDate(prev.startDate, duration),
       }));
     } else {
       setMember({ ...member, [name]: value });
     }
   };
 
-  // ฟังก์ชันเมื่อเลือก/ยกเลิกการใช้แต้มส่วนลด
   const toggleUsePoints = () => {
     const newUsePoints = !usePoints;
     setUsePoints(newUsePoints);
 
-    const discount = newUsePoints ? member.originalPrice * 0.1 : 0; // คำนวณส่วนลด
+    const discount = newUsePoints ? member.originalPrice * 0.1 : 0;
     const finalPrice = member.originalPrice - discount;
 
     setMember((prev) => ({
@@ -82,36 +96,49 @@ function AddMember() {
     }));
   };
 
-  // ฟังก์ชันส่งข้อมูล
   const handleSubmit = () => {
-    const remainingPoints = member.points - (usePoints ? 100 : 0); // หักแต้มถ้าใช้ส่วนลด
-
-    axios.post('http://localhost:5000/api/members', {
-      ...member,
-      points: remainingPoints,
-    }).then(() => {
-      setAlert(true);
-      setTimeout(() => setAlert(false), 3000);
-      setMember({
-        firstName: '',
-        lastName: '',
-        age: '',
-        phone: '',
-        email: '',
-        duration: '',
-        originalPrice: 0,
-        points: 0,
-        discount: 0,
-        startDate: '',
-        endDate: '',
+    axios.post("http://localhost:5000/api/addmembers", member)
+      .then(() => {
+        setAlert(true);
+        setTimeout(() => setAlert(false), 3000);
+  
+        // ดึง ID ใหม่จาก Backend หลังจากเพิ่มสำเร็จ
+        axios.get("http://localhost:5000/api/members/latestId")
+          .then((response) => {
+            setMember({
+              id: response.data.latestId, // ใช้ ID ใหม่
+              firstName: '',
+              lastName: '',
+              age: '',
+              phone: '',
+              email: '',
+              duration: '',
+              originalPrice: 0,
+              points: 0,
+              discount: 0,
+              startDate: '',
+              endDate: '',
+            });
+          });
+      })
+      .catch((error) => {
+        console.error("❌ Error adding member:", error);
       });
-      setUsePoints(false);
-    });
   };
+  
 
   return (
     <Container>
       <h2>Add Member</h2>
+
+      <TextField
+        name="id"
+        label="Member ID"
+        value={member.id}
+        disabled
+        fullWidth
+        margin="normal"
+      />
       <TextField
         name="firstName"
         label="First Name"
@@ -175,7 +202,6 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
-
       <TextField
         name="points"
         label="Points"
@@ -212,7 +238,7 @@ function AddMember() {
           setMember((prev) => ({
             ...prev,
             startDate: newStartDate,
-            endDate: calculateEndDate(newStartDate, member.duration), // คำนวณ End Date
+            endDate: calculateEndDate(newStartDate, member.duration),
           }));
         }}
         fullWidth

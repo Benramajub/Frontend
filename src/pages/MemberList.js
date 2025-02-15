@@ -44,43 +44,60 @@ function MemberList() {
   const [dailyPage, setDailyPage] = useState(0); // 🌟 หน้าของสมาชิกรายวัน
   const [filteredDailyMembers, setFilteredDailyMembers] = useState([]); // 🌟 เพิ่ม state สำหรับค้นหาสมาชิกรายวัน
   const [dailySearchQuery, setDailySearchQuery] = useState(''); // 🌟 แยก state ค้นหาสมาชิกรายวัน
+ 
   useEffect(() => {
     axios.get('http://localhost:5000/api/members').then((response) => {
-      setMembers(response.data);
-      setFilteredMembers(response.data); // ตั้งค่าเริ่มต้นสำหรับข้อมูลที่กรอง
+      const updatedMembers = response.data.map((member) => ({
+        ...member,
+        status: getStatus(member), // คำนวณสถานะใหม่
+      }));
+  
+      setMembers(updatedMembers);
+      setFilteredMembers(updatedMembers);
+  
+      // อัปเดตสถานะไปยังฐานข้อมูล
+      updatedMembers.forEach((member) => {
+        updateMemberStatus(member.id, member.status);
+      });
     });
-
+  
     axios.get('http://localhost:5000/api/payments').then((response) => {
       setPayments(response.data);
     });
+  
     axios.get('http://localhost:5000/api/dailymembers').then((response) => {
       setDailyMembers(response.data);
-      setFilteredDailyMembers(response.data); // 🌟 ตั้งค่าข้อมูลกรองเริ่มต้น
+      setFilteredDailyMembers(response.data);
     });
- 
-
-    
   }, []);
+  
+  // ฟังก์ชันอัปเดตสถานะสมาชิกในฐานข้อมูล
+  const updateMemberStatus = async (id, status) => {
+    console.log(`🔄 Updating status for member ${id}: ${status}`); // Debug log
+  
+    try {
+      const response = await axios.put(`http://localhost:5000/api/members/${id}/status`, { status });
+      console.log(`✅ Server Response:`, response.data);
+    } catch (error) {
+      console.error(`❌ Error updating status for member ${id}:`, error.response?.data || error.message);
+    }
+  };
+  
+  
 
   // ฟังก์ชันเช็คสถานะสมาชิก
   const getStatus = (member) => {
     const paymentExists = payments.some((payment) => payment.memberId === member.id);
     const currentDate = new Date();
     const endDate = new Date(member.endDate);
-
-    // กรณี endDate หมดอายุแล้ว สถานะเป็น Inactive
-    if (endDate < currentDate) {
-      return 'Inactive';
-    }
-
-    // กรณี endDate ยังไม่หมดอายุ และมี Payment
-    if (paymentExists && endDate >= currentDate) {
-      return 'Active';
-    }
-
-    // Default: สถานะเป็น Inactive
+  
+    console.log(`🔍 Checking status for member ${member.id}: EndDate=${member.endDate}, Payment=${paymentExists}`);
+  
+    if (endDate < currentDate) return 'Inactive';
+    if (paymentExists && endDate >= currentDate) return 'Active';
     return 'Inactive';
   };
+  
 
   
 
@@ -391,7 +408,7 @@ const paginatedDailyMembers = dailymembers.slice(
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
+                  
                   <TableCell>Name</TableCell>
                   <TableCell>Amount</TableCell>
                   <TableCell>Code</TableCell>
@@ -403,7 +420,7 @@ const paginatedDailyMembers = dailymembers.slice(
               {filteredDailyMembers.slice(dailyPage * membersPerPage, (dailyPage + 1) * membersPerPage)
                   .map((member) => (
     <TableRow key={member.id}>
-      <TableCell>{member.id}</TableCell>
+      
       <TableCell>{member.name}</TableCell>
       <TableCell>{member.amount}</TableCell>
       <TableCell>{member.code}</TableCell>
