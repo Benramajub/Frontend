@@ -140,7 +140,7 @@ const handleDeleteFingerprint = async () => {
 
   try {
     // ✅ ใช้ `POST` request และส่ง `memberId` ผ่าน `body`
-    const response = await axios.post(`https://gym-management-smoky.vercel.app/api/fingerprint/delete`, { memberId: selectedDeleteId });
+    const response = await axios.post(`https://gym-management-smoky.vercel.app/fingerprint/delete`, { memberId: selectedDeleteId });
 
     if (response.status === 200) {
       setAlert({ open: true, message: response.data.message, severity: "success" });
@@ -183,7 +183,7 @@ const handleDeleteFingerprint = async () => {
     try {
       console.log("เริ่มการสแกนสำหรับสมาชิก:", selectedMemberId);
   
-      const response = await axios.post('https://gym-management-smoky.vercel.app/api/fingerprint/enroll', { memberId: selectedMemberId });
+      const response = await axios.post('http://localhost:5000/api/fingerprint/enroll', { memberId: selectedMemberId });
   
       if (response.data.status === "exists") {
         setAlert({ open: true, message: 'ลายนิ้วมือนี้มีอยู่แล้ว!', severity: 'warning' });
