@@ -18,7 +18,7 @@ function PaymentSummary() {
   // ดึงข้อมูลจาก API
   useEffect(() => {
     // ดึงข้อมูล payment
-    axios.get(`${NEXT_PUBLIC_API_URL}/api/payments`)
+    axios.get('https://gym-management-smoky.vercel.app/api/payments')
       .then((response) => {
         setPayments(response.data);
         calculateDailySummary(response.data, dailyMembers);
@@ -28,7 +28,7 @@ function PaymentSummary() {
       });
 
     // ดึงข้อมูลจาก /api/dailymembers
-    axios.get(`${NEXT_PUBLIC_API_URL}/api/dailymembers`)
+    axios.get('https://gym-management-smoky.vercel.app/dailymembers')
       .then((response) => {
         setDailyMembers(response.data);
         calculateDailySummary(payments, response.data);

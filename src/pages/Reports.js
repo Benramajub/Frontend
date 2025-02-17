@@ -12,7 +12,7 @@ function Reports() {
   useEffect(() => {
     const fetchScanLogs = async () => {
       try {
-        const response = await axios.get(`${NEXT_PUBLIC_API_URL}/api/reports`);
+        const response = await axios.get("https://gym-management-smoky.vercel.app/api/reports");
         setScanLogs(response.data);
       } catch (error) {
         console.error("Error fetching scan logs:", error);
@@ -23,7 +23,7 @@ function Reports() {
 
     const fetchDailyReports = async () => {
       try {
-        const response = await axios.get(`${NEXT_PUBLIC_API_URL}/api/daily-reports`);
+        const response = await axios.get("https://gym-management-smoky.vercel.app/api/daily-reports");
         const formattedData = response.data.map(item => ({
           ...item,
           timestamp: new Date(item.timestamp).toISOString().replace("T", " ").split(".")[0]

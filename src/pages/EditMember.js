@@ -16,7 +16,7 @@ function EditMember() {
 
   useEffect(() => {
     axios
-      .get(`${NEXT_PUBLIC_API_URL}/api/members/${id}`)
+      .get(`https://gym-management-smoky.vercel.app/api/members/${id}`)
       .then((response) => {
         console.log('Fetched Member Data:', response.data); // Debugging
         setMember(response.data);
@@ -32,7 +32,7 @@ function EditMember() {
   };
 
   const handleSubmit = () => {
-    axios.put(`${NEXT_PUBLIC_API_URL}/api/members/${id}`, member).then(() => {
+    axios.put(`https://gym-management-smoky.vercel.app/api/members/${id}`, member).then(() => {
       navigate('/members'); // กลับไปที่หน้า Member List
     });
   };
