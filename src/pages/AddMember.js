@@ -33,7 +33,7 @@ function AddMember() {
 
   // ฟังก์ชันดึง ID สมาชิกล่าสุด
   useEffect(() => {
-    axios.get("http://localhost:5000/api/members/latestId")
+    axios.get("https://gym-management-smoky.vercel.app/api/members/latestId")
       .then((response) => {
         setMember((prev) => ({ ...prev, id: response.data.latestId })); // ใช้ ID ที่ได้จาก backend
       })
