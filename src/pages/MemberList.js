@@ -77,7 +77,7 @@ function MemberList() {
     console.log(`🔄 Updating status for member ${id}: ${status}`); // Debug log
   
     try {
-      const response = await axios.put(`https://gym-management-smoky.vercel.app//api/members/${id}/status`, { status });
+      const response = await axios.put(`https://gym-management-smoky.vercel.app/api/members/${id}/status`, { status });
       console.log(`✅ Server Response:`, response.data);
     } catch (error) {
       console.error(`❌ Error updating status for member ${id}:`, error.response?.data || error.message);
