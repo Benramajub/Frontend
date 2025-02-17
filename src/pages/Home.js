@@ -28,7 +28,7 @@ function AddFinger() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/fingrtprints/members');
+        const response = await axios.get(`${NEXT_PUBLIC_API_URL}/api/fingrtprints/members`);
         setMembers(response.data);
       } catch (error) {
         console.error('Error fetching members:', error);
@@ -113,7 +113,7 @@ const [deleteMembers, setDeleteMembers] = useState([]); // 🔹 รายชื�
 // ✅ ดึงข้อมูลสมาชิกที่มีลายนิ้วมือ
 const fetchDeleteMembers = async () => {
   try {
-    const response = await axios.get("http://localhost:5000/members/registered");
+    const response = await axios.get(`${NEXT_PUBLIC_API_URL}/members/registered`);
     setDeleteMembers(response.data);
   } catch (error) {
     console.error("Error fetching registered members:", error);
@@ -140,7 +140,7 @@ const handleDeleteFingerprint = async () => {
 
   try {
     // ✅ ใช้ `POST` request และส่ง `memberId` ผ่าน `body`
-    const response = await axios.post(`http://localhost:5000/api/fingerprint/delete`, { memberId: selectedDeleteId });
+    const response = await axios.post(`${NEXT_PUBLIC_API_URL}/api/fingerprint/delete`, { memberId: selectedDeleteId });
 
     if (response.status === 200) {
       setAlert({ open: true, message: response.data.message, severity: "success" });
@@ -183,7 +183,7 @@ const handleDeleteFingerprint = async () => {
     try {
       console.log("เริ่มการสแกนสำหรับสมาชิก:", selectedMemberId);
   
-      const response = await axios.post('http://localhost:5000/api/fingerprint/enroll', { memberId: selectedMemberId });
+      const response = await axios.post(`${NEXT_PUBLIC_API_URL}/api/fingerprint/enroll`, { memberId: selectedMemberId });
   
       if (response.data.status === "exists") {
         setAlert({ open: true, message: 'ลายนิ้วมือนี้มีอยู่แล้ว!', severity: 'warning' });

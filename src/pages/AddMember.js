@@ -7,6 +7,7 @@ import {
   MenuItem,
   Snackbar,
 } from '@mui/material';
+require('dotenv').config();
 
 function AddMember() {
   const [member, setMember] = useState({
@@ -33,7 +34,7 @@ function AddMember() {
 
   // ฟังก์ชันดึง ID สมาชิกล่าสุด
   useEffect(() => {
-    axios.get("http://localhost:5000/api/members/latestId")
+    axios.get(`${NEXT_PUBLIC_API_URL}/api/members/latestId`)
       .then((response) => {
         setMember((prev) => ({ ...prev, id: response.data.latestId })); // ใช้ ID ที่ได้จาก backend
       })
@@ -97,13 +98,13 @@ function AddMember() {
   };
 
   const handleSubmit = () => {
-    axios.post("http://localhost:5000/api/addmembers", member)
+    axios.post(`${NEXT_PUBLIC_API_URL}/api/addmembers`, member)
       .then(() => {
         setAlert(true);
         setTimeout(() => setAlert(false), 3000);
   
         // ดึง ID ใหม่จาก Backend หลังจากเพิ่มสำเร็จ
-        axios.get("http://localhost:5000/api/members/latestId")
+        axios.get(`${NEXT_PUBLIC_API_URL}/api/members/latestId`)
           .then((response) => {
             setMember({
               id: response.data.latestId, // ใช้ ID ใหม่

@@ -73,7 +73,7 @@ function Payment() {
       
       if (paymentType === 'payment1') {
         // 📌 **API ชำระเงินของ Payment1**
-        await axios.post('http://localhost:5000/api/payments', {
+        await axios.post(`${NEXT_PUBLIC_API_URL}/api/payments`, {
           memberId: payment.memberId,
           amount: payment.amount,
           date: payment.date
@@ -81,7 +81,7 @@ function Payment() {
 
       } else if (paymentType === 'payment2') {
         // 📌 **API ชำระเงินของ Payment2 และสร้างรหัส**
-        const response = await axios.post('http://localhost:5000/api/dailymembers', {
+        const response = await axios.post(`${NEXT_PUBLIC_API_URL}/api/dailymembers`, {
           name: payment.name
         });
 
