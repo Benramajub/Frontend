@@ -47,7 +47,7 @@ function MemberList() {
   const [dailySearchQuery, setDailySearchQuery] = useState(''); // 🌟 แยก state ค้นหาสมาชิกรายวัน
  
   useEffect(() => {
-    axios.get('https://gym-management-smoky.vercel.app//api/members').then((response) => {
+    axios.get('https://gym-management-smoky.vercel.app/api/members').then((response) => {
       const updatedMembers = response.data.map((member) => ({
         ...member,
         status: getStatus(member), // คำนวณสถานะใหม่
@@ -62,11 +62,11 @@ function MemberList() {
       });
     });
   
-    axios.get('https://gym-management-smoky.vercel.app//api/payments').then((response) => {
+    axios.get('https://gym-management-smoky.vercel.app/api/payments').then((response) => {
       setPayments(response.data);
     });
   
-    axios.get('https://gym-management-smoky.vercel.app//api/dailymembers').then((response) => {
+    axios.get('https://gym-management-smoky.vercel.app/api/dailymembers').then((response) => {
       setDailyMembers(response.data);
       setFilteredDailyMembers(response.data);
     });
