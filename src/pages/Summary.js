@@ -28,7 +28,7 @@ function PaymentSummary() {
       });
 
     // ดึงข้อมูลจาก /api/dailymembers
-    axios.get('https://gym-management-smoky.vercel.app/dailymembers')
+    axios.get('https://gym-management-smoky.vercel.app/api/dailymembers')
       .then((response) => {
         setDailyMembers(response.data);
         calculateDailySummary(payments, response.data);
