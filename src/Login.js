@@ -13,8 +13,6 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-import LoginIcon from '@mui/icons-material/Login';
-
 function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
@@ -25,13 +23,11 @@ function Copyright(props) {
 
 // TODO remove, this demo shouldn't need to reset the theme.
 
+const defaultTheme = createTheme();
+
 export default function SignInSide() {
 
-const defaultTheme = createTheme({
-    typography: {
-      fontFamily: 'Kanit, sans-serif',
-    },
-});
+  
 
 const navigate = useNavigate();
 
@@ -43,7 +39,7 @@ const handleSubmit = (event) => {
     Password: data.get('password'),
   };
 
-  fetch('https://gym-management-smoky.vercel.app/api/login', {
+  fetch('http://localhost:5000/api/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -53,11 +49,11 @@ const handleSubmit = (event) => {
     .then(response => response.json())
     .then((data) => {
       if (data.status === 'Ok') {
-        alert('✅ เข้าสู่ระบบสำเร็จ');
+        alert('✅ Success');
         localStorage.setItem('token', data.token);
-        navigate('/home'); // ✅ ใช้ React Router
+        navigate('/'); // ✅ ใช้ React Router
       } else {
-        alert('❌ รหัสผ่าน หรือ Email ไม่ถูกต้อง ! !');
+        alert('❌ Failed: ' + data.message);
       }
     })
     .catch((error) => {
@@ -77,7 +73,7 @@ const handleSubmit = (event) => {
           md={7}
           sx={{
             backgroundImage:
-              'url(/images/login.png)',
+              'url("/pngtree-an-old-gym-setting-with-dumbbells-image_2569910.jpg")',
             backgroundColor: (t) =>
               t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
             backgroundSize: 'cover',
@@ -98,7 +94,7 @@ const handleSubmit = (event) => {
               <LockOutlinedIcon />
             </Avatar>
             <Typography component="h1" variant="h5">
-            ลงชื่อเข้าใช้งาน
+              Sign in
             </Typography>
             <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
               <TextField
@@ -125,30 +121,13 @@ const handleSubmit = (event) => {
                 control={<Checkbox value="remember" color="primary" />}
                 label="Remember me"
               />
-
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                startIcon={<LoginIcon />}
-                sx={{
-                  mt: 3,
-                  mb: 2,
-                  py: 1.5,
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  borderRadius: '8px',
-                  backgroundColor: 'primary.main',
-                  color: '#fff',
-                  boxShadow: '0 3px 5px rgba(0,0,0,0.2)',
-                  transition: 'background-color 0.3s, transform 0.2s',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                    transform: 'scale(1.05)',
-                  },
-                }}
+                sx={{ mt: 3, mb: 2 }}
               >
-                LOGIN
+                Sign In
               </Button>
              
               <Grid container justifyContent="flex-end">

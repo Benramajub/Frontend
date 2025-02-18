@@ -3,15 +3,15 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import Paper from '@mui/material/Paper';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import LoginIcon from '@mui/icons-material/Login';
 
 function Copyright(props) {
   return (
@@ -26,13 +26,9 @@ function Copyright(props) {
   );
 }
 
-const defaultTheme = createTheme({
-    typography: {
-      fontFamily: 'Kanit, sans-serif',
-    },
-});
-
 // TODO remove, this demo shouldn't need to reset the theme.
+
+const defaultTheme = createTheme();
 
 export default function SignUp() {
   const handleSubmit = (event) => {
@@ -45,7 +41,7 @@ export default function SignUp() {
       fname: data.get('firstName'),
       lname: data.get('lastName'),
     }
-    fetch('https://gym-management-smoky.vercel.app/api/Register', {
+    fetch('http://localhost:5000/api/Register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,10 +52,10 @@ export default function SignUp() {
         .then(data => {
 
          if( data.status === 'Ok'){
-            alert('✅ สมัครสำเร็จ')
+            alert('Register Success')
             
          }else{
-            alert('❌ สมัครไม่สำเร็จ')
+            alert('Register Failed')
          }
         })
         .catch(error => {
@@ -70,22 +66,23 @@ export default function SignUp() {
 
   return (
     <ThemeProvider theme={defaultTheme}>
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundImage: "url(/images/gym2.jpg)", // เปลี่ยน path เป็นภาพของคุณ
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          zIndex:"-1",
-        }}
-      >
       <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ p: 2, background: "rgba(223, 235, 241, 0.5))", borderRadius:"32px" }}>
         <CssBaseline />
-        <Grid/>
+        <Grid
+          item
+          xs={false}
+          sm={4}
+          md={7}
+          sx={{
+            backgroundImage:
+              'url("/pngtree-an-old-gym-setting-with-dumbbells-image_2569910.jpg")',
+            backgroundColor: (t) =>
+              t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
+            backgroundSize: 'cover',
+            backgroundPosition: 'left',
+          }}
+        />
+        
         <Box
           sx={{
             marginTop: 8,
@@ -147,29 +144,13 @@ export default function SignUp() {
             
             </Grid>
             <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                startIcon={<LoginIcon />}
-                sx={{
-                  mt: 3,
-                  mb: 2,
-                  py: 1.5,
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  borderRadius: '8px',
-                  backgroundColor: 'primary.main',
-                  color: '#fff',
-                  boxShadow: '0 3px 5px rgba(0,0,0,0.2)',
-                  transition: 'background-color 0.3s, transform 0.2s',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                    transform: 'scale(1.05)',
-                  },
-                }}
-              >
-                SIGN UP
-              </Button>
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+            >
+              Sign Up
+            </Button>
 
             <Grid container justifyContent="flex-end">
               <Grid item>
@@ -181,9 +162,8 @@ export default function SignUp() {
 
           </Box>
         </Box>
-        </Paper>
+        
       </Container>
-      </Box>
     </ThemeProvider>
   );
 }
