@@ -37,7 +37,7 @@ function AddFinger() {
     fetchMembers();
 
     // ✅ เปิด WebSocket
-    const ws = new WebSocket("ws://localhost:8080");
+    const ws = new WebSocket("ws://https://gym-management-smoky.vercel.app:8080");
 
     let scanTimeout; // 🔥 ตั้งตัวแปร Timeout
 
@@ -183,7 +183,7 @@ const handleDeleteFingerprint = async () => {
     try {
       console.log("เริ่มการสแกนสำหรับสมาชิก:", selectedMemberId);
   
-      const response = await axios.post('http://localhost:5000/api/fingerprint/enroll', { memberId: selectedMemberId });
+      const response = await axios.post('https://gym-management-smoky.vercel.app/api/fingerprint/enroll', { memberId: selectedMemberId });
   
       if (response.data.status === "exists") {
         setAlert({ open: true, message: 'ลายนิ้วมือนี้มีอยู่แล้ว!', severity: 'warning' });
