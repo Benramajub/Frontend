@@ -28,7 +28,7 @@ function AddFinger() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/api/fingrtprints/members');
+        const response = await axios.get('https://gym-management-smoky.vercel.app/api/fingrtprints/members');
         setMembers(response.data);
       } catch (error) {
         console.error('Error fetching members:', error);
@@ -113,7 +113,7 @@ const [deleteMembers, setDeleteMembers] = useState([]); // 🔹 รายชื�
 // ✅ ดึงข้อมูลสมาชิกที่มีลายนิ้วมือ
 const fetchDeleteMembers = async () => {
   try {
-    const response = await axios.get("http://localhost:5000/api/members/registered");
+    const response = await axios.get("https://gym-management-smoky.vercel.app/members/registered");
     setDeleteMembers(response.data);
   } catch (error) {
     console.error("Error fetching registered members:", error);
