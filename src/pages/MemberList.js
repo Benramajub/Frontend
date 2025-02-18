@@ -17,19 +17,16 @@ import {
   DialogTitle,
   MenuItem,
   Snackbar,
-  Box,
-  Typography,
   Alert,
 } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ContactPageIcon from '@mui/icons-material/ContactPage';
+
 
 function MemberList() {
   const [members, setMembers] = useState([]);
   const [payments, setPayments] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMembers, setFilteredMembers] = useState([]);
+
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editMember, setEditMember] = useState(null);
   const [selectedDiscount, setSelectedDiscount] = useState(0);
@@ -86,6 +83,8 @@ function MemberList() {
       console.error(`❌ Error updating status for member ${id}:`, error.response?.data || error.message);
     }
   };
+  
+  
 
   // ฟังก์ชันเช็คสถานะสมาชิก
   const getStatus = (member) => {
@@ -100,6 +99,10 @@ function MemberList() {
     return 'Inactive';
   };
   
+
+  
+
+
   const handleEdit = (member) => {
     setEditMember({
       ...member,
@@ -111,11 +114,6 @@ function MemberList() {
     setOpenEditDialog(true);
   };
   
-  const customTheme = createTheme({
-    typography: {
-      fontFamily: '"Kanit", sans-serif',
-    },
-  });
 
   const handleCloseEditDialog = () => {
     setOpenEditDialog(false);
@@ -130,6 +128,7 @@ function MemberList() {
     startDateObj.setMonth(startDateObj.getMonth() + parseInt(duration, 10));
     return startDateObj.toISOString().split('T')[0];
   };
+  
 
   const handleFieldChange = (e) => {
     const { name, value } = e.target;
@@ -189,6 +188,9 @@ function MemberList() {
     }
 };
 
+
+
+
   const handleDiscountChange = (e) => {
     const discount = parseInt(e.target.value, 10);
     const basePrice = editMember.duration * 900;
@@ -208,6 +210,7 @@ function MemberList() {
       points: prev.points - requiredPoints,
     }));
 };
+  
 
 const handleSaveEdit = async () => {
   try {
@@ -243,12 +246,18 @@ const handleSaveEdit = async () => {
   }
 };
   
+  
+  
   useEffect(() => {
     if (currentPage * membersPerPage >= filteredMembers.length) {
       setCurrentPage(0); // รีเซ็ตเป็นหน้าแรกถ้าหน้าปัจจุบันไม่มีข้อมูล
     }
   }, [filteredMembers]);
   
+  
+
+  
+
   // ฟังก์ชันลบสมาชิก
   const handleDelete = async () => {
     try {
@@ -297,49 +306,26 @@ const paginatedDailyMembers = dailymembers.slice(
   );
 
   return (
-    <ThemeProvider theme={customTheme}>
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'url(/images/gym4.jpg) no-repeat center center fixed',
-        backgroundSize: 'cover',
-        zIndex: -1,
-      }}
-    />
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-    <Paper elevation={3} sx={{ p: 3, background:"linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px"}}>
-      <Typography
-        variant="h5"
-        sx={{
-          color: "white",
-          padding: "10px",
-          fontWeight: "bold",
-          borderRadius: "5px",
-          textAlign: "left",
-        }}
-      >จัดการข้อมูล
-      </Typography>
-    <Paper elevation={3} sx={{ p: 2, background: "rgba(223, 235, 241, 0.5))", borderRadius:"32px" }}>
-    <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-      <Button
-        variant={viewMode === 'monthly' ? 'contained' : 'outlined'}
-        color="primary"
-        onClick={() => setViewMode('monthly')}
-      >
-        สมาชิกรายเดือน
-      </Button>
-      <Button
-        variant={viewMode === 'daily' ? 'contained' : 'outlined'}
-        color="primary"
-        onClick={() => setViewMode('daily')}
-      >
-        สมาชิกรายวัน
-      </Button>
-    </div>
+      <Container>
+      <h2>Member List</h2>
+
+      {/* 🌟 ปุ่มเปลี่ยนระหว่าง "สมาชิกรายเดือน" และ "สมาชิกรายวัน" */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        <Button
+          variant={viewMode === 'monthly' ? 'contained' : 'outlined'}
+          color="primary"
+          onClick={() => setViewMode('monthly')}
+        >
+          สมาชิกรายเดือน
+        </Button>
+        <Button
+          variant={viewMode === 'daily' ? 'contained' : 'outlined'}
+          color="secondary"
+          onClick={() => setViewMode('daily')}
+        >
+          สมาชิกรายวัน
+        </Button>
+      </div>
 {/* 🌟 ช่องค้นหาที่ใช้ร่วมกัน */}
 <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
     <TextField
@@ -349,7 +335,7 @@ const paginatedDailyMembers = dailymembers.slice(
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
     />
-    <Button variant="contained" color="secondary" onClick={handleSearch} sx={{ borderRadius:"16px" }}>
+    <Button variant="contained" color="primary" onClick={handleSearch}>
         Search
     </Button>
 </div>
@@ -359,7 +345,7 @@ const paginatedDailyMembers = dailymembers.slice(
         <>
       
           <TableContainer component={Paper}>
-            <Table sx={{ border: "2px solid gray" }}>
+            <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
@@ -371,7 +357,7 @@ const paginatedDailyMembers = dailymembers.slice(
                   <TableCell>Start Date</TableCell>
                   <TableCell>End Date</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell rowSpan={2} align="center">Actions</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -391,19 +377,16 @@ const paginatedDailyMembers = dailymembers.slice(
                       <TableCell>
                       <Button
                     variant="contained"
-                    color="success"
+                    color="primary"
                     onClick={() => handleEdit(member)}
-                    style={{ marginLeft: '10px' }}
-                    startIcon={<ContactPageIcon/>}
                   >
                     Edit
                   </Button>
                   <Button
                     variant="contained"
-                    color="error"
+                    color="secondary"
                     onClick={() => handleOpenDeleteDialog(member)}
                     style={{ marginLeft: '10px' }}
-                    startIcon={<DeleteIcon/>}
                   >
                     Delete
                   </Button>
@@ -423,7 +406,7 @@ const paginatedDailyMembers = dailymembers.slice(
     
 
           <TableContainer component={Paper}>
-            <Table sx={{ border: "2px solid gray" }}>
+            <Table>
               <TableHead>
                 <TableRow>
                   
@@ -455,7 +438,7 @@ const paginatedDailyMembers = dailymembers.slice(
 
 
       <Dialog open={openEditDialog} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>เเก้ไขข้อมูลสมาชิก</DialogTitle>
+        <DialogTitle>Edit Member</DialogTitle>
         <DialogContent>
           {editMember && (
             <>
@@ -538,25 +521,25 @@ const paginatedDailyMembers = dailymembers.slice(
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditDialog} color="secondary" variant="contained">
+          <Button onClick={handleCloseEditDialog} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleSaveEdit} color="primary" variant="contained" >
+          <Button onClick={handleSaveEdit} color="primary" >
             Save
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>ยืนยันการลบข้อมูล</DialogTitle>
+        <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          <p>คุณเเน่ใจหรือไม่ ต้องการลบสมาชิกนี้?</p>
+          <p>Are you sure you want to delete this member?</p>
         </DialogContent>
         <DialogActions>
-        <Button onClick={handleCloseDeleteDialog} color="secondary" variant="contained">
+          <Button onClick={handleCloseDeleteDialog} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
+          <Button onClick={handleDelete} color="primary">
             Delete
           </Button>
         </DialogActions>
@@ -587,22 +570,19 @@ const paginatedDailyMembers = dailymembers.slice(
           Next
         </Button>
       </div>
+
       
-  <Snackbar
-    open={snackbar.open}
-   autoHideDuration={3000}
-    onClose={() => setSnackbar({ ...snackbar, open: false })}
-   anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-  >
+<Snackbar
+  open={snackbar.open}
+  autoHideDuration={3000}
+  onClose={() => setSnackbar({ ...snackbar, open: false })}
+  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+>
   <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
     {snackbar.message}
   </Alert>
-  </Snackbar>
-  </Paper>
-  </Paper>
-  </Container>
-  </ThemeProvider>
-    
+</Snackbar>
+    </Container>
   );
 }
 
