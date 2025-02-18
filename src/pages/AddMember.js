@@ -6,7 +6,12 @@ import {
   Button,
   MenuItem,
   Snackbar,
+  Box,
+  Grid,
+  Typography,
+  Paper,
 } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 function AddMember() {
   const [member, setMember] = useState({
@@ -27,6 +32,7 @@ function AddMember() {
 
   const [usePoints, setUsePoints] = useState(false);
   const [alert, setAlert] = useState(false);
+  const [error, setError] = useState(''); // ข้อความเตือน
 
   // รายเดือน (1-12 เดือน)
   const durations = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -41,10 +47,23 @@ function AddMember() {
         console.error("Error fetching latest member ID:", error);
       });
   }, []);
+
+  const validateForm = () => {
+    if (!member.firstName) return 'กรุณากรอกข้อมูลให้ครบถ้วน ! !';
+    if (!member.lastName) return 'กรุณากรอกข้อมูลให้ครบถ้วน ! !';
+    if (!member.age || isNaN(member.age) || member.age <= 0) return 'กรุณากรอกข้อมูลให้ครบถ้วน ! !';
+    if (!member.phone) return 'กรุณากรอกข้อมูลให้ครบถ้วน ! !';
+    if (!member.email) return 'กรุณากรอกข้อมูลให้ครบถ้วน ! !';
+    if (!member.duration) return 'กรุณากรอกข้อมูลให้ครบถ้วน ! !';
+    if (!member.startDate) return 'กรุณากรอกข้อมูลให้ครบถ้วน ! !';
+    return ''; // ไม่มีข้อผิดพลาด
+  };
   
-  
-  
-  
+  const customTheme = createTheme({
+    typography: {
+      fontFamily: '"Kanit", sans-serif',
+    },
+  });
 
   const calculateEndDate = (start, months) => {
     if (!start || !months) return '';
@@ -82,6 +101,27 @@ function AddMember() {
     }
   };
 
+  // ฟังก์ชันล้างข้อมูลฟอร์ม
+  const resetForm = () => {
+    setMember(prev => ({
+      ...prev, // ใช้ค่าเดิมของ id
+      firstName: '',
+      lastName: '',
+      age: '',
+      phone: '',
+      email: '',
+      duration: '',
+      originalPrice: 0,
+      points: 0,
+      discount: 0,
+      startDate: '',
+      endDate: '',
+    }));
+    setUsePoints(false);
+    setError(''); // รีเซ็ตข้อความเตือน
+  };
+  
+
   const toggleUsePoints = () => {
     const newUsePoints = !usePoints;
     setUsePoints(newUsePoints);
@@ -97,6 +137,12 @@ function AddMember() {
   };
 
   const handleSubmit = () => {
+    const errorMsg = validateForm();
+    if (errorMsg) {
+      setError(errorMsg); // แสดงข้อความแจ้งเตือน
+      return;
+    }
+  
     axios.post("https://gym-management-smoky.vercel.app/api/addmembers", member)
       .then(() => {
         setAlert(true);
@@ -125,12 +171,44 @@ function AddMember() {
         console.error("❌ Error adding member:", error);
       });
   };
-  
 
   return (
-    <Container>
-      <h2>Add Member</h2>
-
+    <ThemeProvider theme={customTheme}>
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'url(/images/gym4.jpg) no-repeat center center fixed',
+          backgroundSize: 'cover',
+          zIndex: -1,
+        }}
+      />
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Paper elevation={3} sx={{ p: 3, background: "linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px" }}>
+          <Typography
+            variant="h5"
+            sx={{
+              color: "white",
+              padding: "10px",
+              fontWeight: "bold",
+              borderRadius: "5px",
+              textAlign: "left",
+            }}
+          >
+            เพิ่มผู้ใช้งาน
+          </Typography>
+          <Paper elevation={3} sx={{ p: 2, background: "rgba(223, 235, 241, 0.5))", borderRadius: "32px" }}>
+            {/* แสดงข้อความเตือนถ้ามีข้อผิดพลาด */}
+            {error && (
+              <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+            )}
+      <Grid container spacing={2}>
+      <Grid item xs={12} sm={12}>
       <TextField
         name="id"
         label="Member ID"
@@ -139,6 +217,8 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         name="firstName"
         label="First Name"
@@ -147,6 +227,8 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         name="lastName"
         label="Last Name"
@@ -155,6 +237,8 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         name="age"
         label="Age"
@@ -163,6 +247,8 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         name="phone"
         label="Phone"
@@ -171,6 +257,8 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         name="email"
         label="Email"
@@ -179,6 +267,8 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         select
         name="duration"
@@ -194,6 +284,8 @@ function AddMember() {
           </MenuItem>
         ))}
       </TextField>
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         name="originalPrice"
         label="Original Price"
@@ -202,6 +294,8 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         name="points"
         label="Points"
@@ -221,6 +315,8 @@ function AddMember() {
           </Button>
         </div>
       )}
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         name="discount"
         label="Discount Amount"
@@ -229,6 +325,8 @@ function AddMember() {
         fullWidth
         margin="normal"
       />
+      </Grid>
+      <Grid item xs={12} sm={6}>
       <TextField
         label="Start Date"
         type="date"
@@ -247,20 +345,32 @@ function AddMember() {
           shrink: true,
         }}
       />
+      </Grid>
+      <Grid item xs={12} sm={12}>
       <TextField
         label="End Date"
         type="text"
         value={member.endDate}
         readOnly
         fullWidth
+        disabled
         margin="normal"
       />
-
+      </Grid>
+      </Grid>
+      <Box sx={{display:"flex" , justifyContent:"center", gap:1, mt:2}}>
       <Button variant="contained" color="primary" onClick={handleSubmit}>
-        Save
+      Save
       </Button>
+      <Button onClick={resetForm} variant="contained" sx={{ backgroundColor:"orangered", color:"white" }}>
+      Clear
+      </Button>
+      </Box>
       <Snackbar open={alert} message="Member added successfully!" />
+      </Paper>
+      </Paper>
     </Container>
+    </ThemeProvider>
   );
 }
 

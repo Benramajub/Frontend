@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Container, TextField, Button } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Container, TextField, Button, Typography, Box } from '@mui/material';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 // ลงทะเบียน chart.js components
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend);
 
-function PaymentSummary() {
+function Summary() {
   const [payments, setPayments] = useState([]);
   const [dailyMembers, setDailyMembers] = useState([]); // ✅ ข้อมูลจาก /api/dailymembers
   const [dailySummary, setDailySummary] = useState({});
@@ -93,6 +94,12 @@ function PaymentSummary() {
     ],
   };
 
+  const customTheme = createTheme({
+    typography: {
+      fontFamily: '"Kanit", sans-serif',
+    },
+  });
+
   // ฟังก์ชันเคลียร์การเลือกวัน
   const clearDateSelection = () => {
     setStartDate('');
@@ -100,9 +107,34 @@ function PaymentSummary() {
   };
 
   return (
-    <Container>
-      <h2>Payment Summary</h2>
-
+    <ThemeProvider theme={customTheme}>
+        <Box
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'url(/images/gym4.jpg) no-repeat center center fixed',
+              backgroundSize: 'cover',
+              zIndex: -1,
+            }}
+          />
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Paper elevation={3} sx={{ p: 3, background:"linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px"}}>
+            <Typography
+              variant="h5"
+              sx={{
+                color: "white",
+                padding: "10px",
+                fontWeight: "bold",
+                borderRadius: "5px",
+                textAlign: "left",
+              }}
+            >สรุปยอด
+            </Typography>
+      
+      <Paper elevation={3} sx={{ p: 2, background: "rgba(223, 235, 241, 0.5))", borderRadius:"32px" }}>
       {/* ฟอร์มเลือกวันที่ */}
       <div style={{ marginBottom: '20px' }}>
         <TextField
@@ -120,7 +152,7 @@ function PaymentSummary() {
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
         />
-        <Button variant="outlined" onClick={clearDateSelection} style={{ marginLeft: '10px' }}>
+        <Button variant="contained" onClick={clearDateSelection} style={{ marginLeft: '10px' }}>
           Clear Date Selection
         </Button>
       </div>
@@ -132,7 +164,7 @@ function PaymentSummary() {
       
       {/* ตารางแสดงข้อมูลยอดรวมรายวัน */}
       <TableContainer component={Paper} style={{ marginBottom: '30px' }}>
-        <Table>
+        <Table sx={{ border: "2px solid gray" }}>
           <TableHead>
             <TableRow>
               <TableCell>Date</TableCell>
@@ -153,7 +185,7 @@ function PaymentSummary() {
       {/* ตารางแสดงข้อมูล Payment */}
       <h3>Payment Details</h3>
       <TableContainer component={Paper}>
-        <Table>
+        <Table sx={{ border: "2px solid gray" }}>
           <TableHead>
             <TableRow>
               <TableCell>Payment ID</TableCell>
@@ -182,8 +214,11 @@ function PaymentSummary() {
           </TableBody>
         </Table>
       </TableContainer>
+      </Paper>
+      </Paper>
     </Container>
+    </ThemeProvider>
   );
 }
 
-export default PaymentSummary;
+export default Summary;

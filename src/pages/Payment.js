@@ -12,10 +12,14 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  Typography,
+  Paper,
   DialogContentText,
   DialogActions,
   Alert,
+  Box,
 } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 function Payment() {
   const [paymentType, setPaymentType] = useState('payment1');
@@ -52,6 +56,12 @@ function Payment() {
       setPayment({ ...payment, [name]: value });
     }
   };
+
+  const customTheme = createTheme({
+        typography: {
+          fontFamily: '"Kanit", sans-serif',
+        },
+      });
 
   const handleDialogOpen = () => {
     if ((paymentType === 'payment1' && (!payment.memberId || !payment.amount)) ||
@@ -105,14 +115,38 @@ function Payment() {
   };
 
   return (
-    <Container>
-      <h2>Payment</h2>
-
+    <ThemeProvider theme={customTheme}>
+    <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'url(/images/gym4.jpg) no-repeat center center fixed',
+          backgroundSize: 'cover',
+          zIndex: -1,
+        }}
+      />
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Paper elevation={3} sx={{ p: 3, background:"linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px"}}>
+        <Typography
+          variant="h5"
+          sx={{
+            color: "white",
+            padding: "10px",
+            fontWeight: "bold",
+            borderRadius: "5px",
+            textAlign: "left",
+          }}
+        >บันทึกชำระเงิน
+        </Typography>
+      <Paper elevation={3} sx={{ p: 2, background: "rgba(223, 235, 241, 0.5))", borderRadius:"32px" }}>
       <FormControl fullWidth margin="normal">
         <InputLabel>ประเภทการชำระเงิน</InputLabel>
         <Select value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
-          <MenuItem value="payment1">Payment 1 (ระบบเดิม)</MenuItem>
-          <MenuItem value="payment2">Payment 2 (ปลดล็อกประตู)</MenuItem>
+          <MenuItem value="payment1">สมาชิกรายเดือน</MenuItem>
+          <MenuItem value="payment2">สมาชิกรายวัน</MenuItem>
         </Select>
       </FormControl>
 
@@ -128,12 +162,12 @@ function Payment() {
               ))}
             </Select>
           </FormControl>
-          <TextField name="amount" label="Amount" fullWidth margin="normal" value={payment.amount} InputProps={{ readOnly: true }} />
+          <TextField name="amount" label="Amount" fullWidth margin="normal" value={payment.amount} InputProps={{ readOnly: true }} disabled />
         </>
       ) : (
         <>
-          <TextField name="name" label="ชื่อผู้ใช้" fullWidth margin="normal" value={payment.name} onChange={handleChange} />
-          <TextField name="amount" label="Amount" fullWidth margin="normal" value="100" InputProps={{ readOnly: true }} />
+          <TextField name="name" label="Username" fullWidth margin="normal" value={payment.name} onChange={handleChange} />
+          <TextField name="amount" label="Amount" fullWidth margin="normal" value="100" InputProps={{ readOnly: true }} disabled />
         </>
       )}
 
@@ -174,7 +208,10 @@ function Payment() {
           {alert.message}
         </Alert>
       </Snackbar>
+    </Paper>
+    </Paper>
     </Container>
+    </ThemeProvider>
   );
 }
 
