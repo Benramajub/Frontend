@@ -12,13 +12,9 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  Box,
-  Paper,
-  Typography,
   DialogActions
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import axios from 'axios';
 
 function AddFinger() {
@@ -110,11 +106,7 @@ function AddFinger() {
     };
 }, []);
 
-const customTheme = createTheme({
-    typography: {
-      fontFamily: '"Kanit", sans-serif',
-    },
-  });
+
 
 const [deleteMembers, setDeleteMembers] = useState([]); // 🔹 รายชื่อสมาชิกที่ลงทะเบียนลายนิ้วมือแล้ว
 
@@ -165,6 +157,10 @@ const handleDeleteFingerprint = async () => {
   }
 };
 
+
+
+
+
   const handleSelectMember = (event) => {
     setSelectedMemberId(event.target.value);
   };
@@ -202,34 +198,12 @@ const handleDeleteFingerprint = async () => {
     }
   };
 
+
+
   return (
-    <ThemeProvider theme={customTheme}>
-    <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'url(/images/gym4.jpg) no-repeat center center fixed',
-          backgroundSize: 'cover',
-          zIndex: -1,
-        }}
-      />
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-    <Paper elevation={3} sx={{ p: 3, background:"linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px", width: "80%", margin: "0 auto" }}>
-        <Typography
-          variant="h5"
-          sx={{
-            color: "white",
-            padding: "10px",
-            fontWeight: "bold",
-            borderRadius: "5px",
-            textAlign: "left",
-          }}
-        >ลงทะเบียนลายนิ้วมือ
-        </Typography>
-    <Paper elevation={3} sx={{ p: 2,gap: 1, background: "rgba(223, 235, 241, 0.5))", borderRadius:"32px" }}>
+    <Container>
+      <h2>ลงทะเบียนลายนิ้วมือ</h2>
+
       <FormControl fullWidth margin="normal">
         <InputLabel>เลือกสมาชิก</InputLabel>
         <Select value={selectedMemberId} onChange={handleSelectMember}>
@@ -244,12 +218,13 @@ const handleDeleteFingerprint = async () => {
           )}
         </Select>
       </FormControl>
-      <Box sx={{display:"flex", justifyContent:"center", gap:2, mt:2}}>
+
       <Button
         variant="contained"
         color="primary"
         onClick={handleStartScan}
         disabled={isScanning || members.length === 0}
+        fullWidth
       >
         {isScanning ? (
           <>
@@ -260,43 +235,34 @@ const handleDeleteFingerprint = async () => {
           'เริ่มสแกนลายนิ้วมือ'
         )}
       </Button>
-      </Box>
-      </Paper>
-      <Typography 
-            variant="h5"
-          sx={{
-            color: "white",
-            padding: "10px",
-            fontWeight: "bold",
-            borderRadius: "5px",
-            textAlign: "left",
-          }}>ลบลายนิ้วมือ</Typography>
-    <Paper elevation={3} sx={{ p: 2,gap: 1, background: "rgba(223, 235, 241, 0.5))", borderRadius:"32px" }}>
-    <FormControl fullWidth margin="normal">
-    <InputLabel>เลือกสมาชิกที่ต้องการลบลายนิ้วมือ</InputLabel>
-    <Select value={selectedDeleteId} onChange={handleSelectDeleteMember}>
-        {deleteMembers.length > 0 ? (
-        deleteMembers.map((member) => (
-            <MenuItem key={member.id} value={member.id}>
-            {`${member.id} - ${member.firstName} ${member.lastName}`}
-            </MenuItem>
-        ))
-        ) : (
-        <MenuItem disabled>ไม่มีสมาชิกที่ลงทะเบียนลายนิ้วมือ</MenuItem>
-        )}
-    </Select>
-    </FormControl>
-    <Box sx={{display:"flex", justifyContent:"center", gap:2, mt:2}}>
-    <Button
-    variant="contained"
-    color="secondary"
-    onClick={handleDeleteFingerprint}
-    disabled={!selectedDeleteId}
-    startIcon={<DeleteIcon />}
-    >
-    ลบลายนิ้วมือ
-    </Button>
-    </Box>
+
+      <h2>ลบลายนิ้วมือ</h2>
+<FormControl fullWidth margin="normal">
+  <InputLabel>เลือกสมาชิกที่ต้องการลบลายนิ้วมือ</InputLabel>
+  <Select value={selectedDeleteId} onChange={handleSelectDeleteMember}>
+    {deleteMembers.length > 0 ? (
+      deleteMembers.map((member) => (
+        <MenuItem key={member.id} value={member.id}>
+          {`${member.id} - ${member.firstName} ${member.lastName}`}
+        </MenuItem>
+      ))
+    ) : (
+      <MenuItem disabled>ไม่มีสมาชิกที่ลงทะเบียนลายนิ้วมือ</MenuItem>
+    )}
+  </Select>
+</FormControl>
+
+<Button
+  variant="contained"
+  color="secondary"
+  onClick={handleDeleteFingerprint}
+  disabled={!selectedDeleteId}
+  fullWidth
+  startIcon={<DeleteIcon />}
+>
+  ลบลายนิ้วมือ
+</Button>
+
       <Dialog open={openDialog} maxWidth="xs" fullWidth>
       <DialogTitle align="center">กำลังสแกนลายนิ้วมือ</DialogTitle>
       <DialogContent style={{ textAlign: 'center', padding: '20px' }}>
@@ -309,7 +275,6 @@ const handleDeleteFingerprint = async () => {
         </Button>
       </DialogActions>
     </Dialog>
-    </Paper>
 
     <Snackbar
       open={alert.open}
@@ -319,9 +284,7 @@ const handleDeleteFingerprint = async () => {
     >
       <Alert severity={alert.severity}>{alert.message}</Alert>
     </Snackbar>
-    </Paper>
     </Container>
-    </ThemeProvider>
   );
 }
 
