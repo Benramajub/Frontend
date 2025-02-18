@@ -37,7 +37,7 @@ function AddFinger() {
     fetchMembers();
 
     // ✅ เปิด WebSocket
-    const ws = new WebSocket("ws://https://gym-management-smoky.vercel.app:8080");
+    const ws = new WebSocket("ws://localhost:8080");
 
     let scanTimeout; // 🔥 ตั้งตัวแปร Timeout
 
