@@ -23,7 +23,7 @@ function Reports() {
 
     const fetchDailyReports = async () => {
       try {
-        const response = await axios.get("https://gym-management-smoky.vercel.app/api/daily-reports");
+        const response = await axios.get("http://localhost:5000/api/daily-reports");
         const formattedData = response.data.map(item => ({
           ...item,
           timestamp: new Date(item.timestamp).toISOString().replace("T", " ").split(".")[0]
