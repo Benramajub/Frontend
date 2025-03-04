@@ -69,7 +69,7 @@ function MemberList() {
       setPayments(response.data);
     });
   
-    axios.get('https://gym-management-smoky.vercel.app/api/dailymembers').then((response) => {
+    axios.get('http://localhost:5000/api/dailymembers').then((response) => {
       setDailyMembers(response.data);
       setFilteredDailyMembers(response.data);
     });
