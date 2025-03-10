@@ -18,7 +18,7 @@ function Reports() {
   useEffect(() => {
     const fetchScanLogs = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/fingerreports");
+        const response = await axios.get("http://localhost:5000/api/scan-reports");
         setScanLogs(response.data);
       } catch (error) {
         console.error("Error fetching scan logs:", error);
@@ -44,11 +44,17 @@ function Reports() {
     fetchDailyReports();
   }, []);
 
+  const customTheme = createTheme({
+    typography: {
+      fontFamily: '"Kanit", sans-serif',
+    },
+  });
+
   const scanLogsColumns = [
     { field: "id", headerName: "ID", width: 70 },
     { field: "memberId", headerName: "Member ID", width: 100 },
-    { field: "name", headerName: "ชื่อ - นามสกุล", width: 200 },
-    { field: "scanTime", headerName: "วันที่ & เวลา", width: 200 },
+    { field: "name", headerName: "Name", width: 200 },
+    { field: "scanTime", headerName: "Date", width: 200 },
   ];
 
   const dailyReportsColumns = [
@@ -89,10 +95,32 @@ function Reports() {
   };
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        รายงาน
-      </Typography>
+    <ThemeProvider theme={customTheme}>
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'url(/images/gym4.jpg) no-repeat center center fixed',
+            backgroundSize: 'cover',
+            zIndex: -1,
+          }}
+        />
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Paper elevation={3} sx={{ p: 3, background:"linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px"}}>
+            <Typography
+              variant="h5"
+              sx={{
+                color: "white",
+                padding: "10px",
+                fontWeight: "bold",
+                borderRadius: "5px",
+                textAlign: "left",
+              }}
+            >รายงาน
+            </Typography>
       <Box mb={2}>
         <Button variant="contained" color="primary" onClick={() => setView("scanLogs")} style={{ marginRight: 10 }}>
           รายงานการสแกน
@@ -104,12 +132,12 @@ function Reports() {
 
       <Paper style={{ padding: "10px", marginBottom: "20px" }}>
         <Typography variant="h5" gutterBottom>
-          {view === "scanLogs" ? "กราฟการสแกน" : "กราฟรายงานรายวัน"}
+          {view === "scanLogs" ? "กราฟรายงานการสแกน" : "กราฟรายงานรายวัน"}
         </Typography>
         <Line data={view === "scanLogs" ? prepareChartData(scanLogs) : prepareChartData(dailyReports)} />
       </Paper>
 
-      <Paper style={{ height: 400, width: "100%", padding: "10px" }}>
+      <Paper style={{ height: 400, width: "98%", padding: "10px" }}>
         <DataGrid
           rows={view === "scanLogs" ? scanLogs : dailyReports}
           columns={view === "scanLogs" ? scanLogsColumns : dailyReportsColumns}
@@ -118,7 +146,9 @@ function Reports() {
           rowsPerPageOptions={[5, 10, 20]}
         />
       </Paper>
+      </Paper>
     </Container>
+    </ThemeProvider>
   );
 }
 

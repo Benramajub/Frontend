@@ -64,6 +64,12 @@ function Summary() {
     setPaymentYearlySummary(yearly);
   };
 
+  const customTheme = createTheme({
+          typography: {
+            fontFamily: '"Kanit", sans-serif',
+          },
+        });
+
   const calculateMemberSummaries = (dailyMembers) => {
     const daily = {};
     const monthly = {};
@@ -96,26 +102,38 @@ function Summary() {
   };
 
   return (
-    <ThemeProvider theme={createTheme({ typography: { fontFamily: '"Kanit", sans-serif' } })}>
+    <ThemeProvider theme={customTheme}>
+      <Box
+              sx={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'url(/images/gym4.jpg) no-repeat center center fixed',
+                backgroundSize: 'cover',
+                zIndex: -1,
+              }}
+            />
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Paper elevation={3} sx={{ p: 3, background: "linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px" }}>
           <Typography variant="h5" sx={{ color: "white", padding: "10px", fontWeight: "bold", borderRadius: "5px", textAlign: "left" }}>
             สรุปยอด
           </Typography>
 
-          <Paper elevation={3} sx={{ p: 2, background: "rgba(223, 235, 241, 0.5)", borderRadius: "32px" }}>
+          <Paper elevation={3} sx={{ p: 2, background: "rgba(223, 235, 241, 0.5))", borderRadius: "32px" }}>
             <Button variant="contained" onClick={() => setIsPayments(true)} style={{ marginRight: '10px' }}>
-              Show Payments
+            สรุปยอดสมาชิกรายเดือน
             </Button>
-            <Button variant="contained" onClick={() => setIsPayments(false)}>
-              Show Daily Members
+            <Button variant="contained" onClick={() => setIsPayments(false)} color="secondary">
+            สรุปยอดสมาชิกรายวัน
             </Button>
 
         
 
             {isPayments ? (
               <>
-                <h3>Daily Summary (Payments)</h3>
+                <h3>สรุปยอดรายวัน (สมาชิกรายเดือน)</h3>
                 <TableContainer component={Paper}>
                   <Table sx={{ border: "2px solid gray" }}>
                     <TableHead>
@@ -134,8 +152,9 @@ function Summary() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <br />
 
-                <h3>Monthly Summary (Payments)</h3>
+                <h3>สรุปยอดรายเดือน (สมาชิกรายเดือน)</h3>
                 <TableContainer component={Paper}>
                   <Table sx={{ border: "2px solid gray" }}>
                     <TableHead>
@@ -154,8 +173,9 @@ function Summary() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <br />
 
-                <h3>Yearly Summary (Payments)</h3>
+                <h3>สรุปยอดรายปี (สมาชิกรายเดือน)</h3>
                 <TableContainer component={Paper}>
                   <Table sx={{ border: "2px solid gray" }}>
                     <TableHead>
@@ -174,8 +194,9 @@ function Summary() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <br />
 
-                <h3>All Payment Details</h3>
+                <h3>รายละเอียดสมาชิกรายเดือนทั้งหมด</h3>
                 <TableContainer component={Paper}>
                   <Table sx={{ border: "2px solid gray" }}>
                     <TableHead>
@@ -198,10 +219,11 @@ function Summary() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <br />
               </>
             ) : (
               <>
-                <h3>Daily Summary (Daily Members)</h3>
+                <h3>สรุปยอดรายวัน (สมาชิกรายวัน)</h3>
                 <TableContainer component={Paper}>
                   <Table sx={{ border: "2px solid gray" }}>
                     <TableHead>
@@ -220,8 +242,9 @@ function Summary() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <br />
 
-                <h3>Monthly Summary (Daily Members)</h3>
+                <h3>สรุปยอดรายเดือน (สมาชิกรายวัน)</h3>
                 <TableContainer component={Paper}>
                   <Table sx={{ border: "2px solid gray" }}>
                     <TableHead>
@@ -240,8 +263,9 @@ function Summary() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <br />
 
-                <h3>Yearly Summary (Daily Members)</h3>
+                <h3>สรุปยอดรายปี (สมาชิกรายวัน)</h3>
                 <TableContainer component={Paper}>
                   <Table sx={{ border: "2px solid gray" }}>
                     <TableHead>
@@ -260,8 +284,9 @@ function Summary() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <br />
 
-                <h3>All Daily Member Details</h3>
+                <h3>รายละเอียดสมาชิกรายวันทั้งหมด</h3>
                 <TableContainer component={Paper}>
                   <Table sx={{ border: "2px solid gray" }}>
                     <TableHead>
