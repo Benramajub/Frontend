@@ -35,7 +35,7 @@ function Payment() {
   const [generatedCode, setGeneratedCode] = useState('');
 
   useEffect(() => {
-    axios.get('https://gym-management-smoky.vercel.app/api/members').then((response) => {
+    axios.get('http://localhost:5000/api/members').then((response) => {
       setMembers(response.data);
     });
   }, []);
