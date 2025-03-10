@@ -143,13 +143,13 @@ function AddMember() {
       return;
     }
   
-    axios.post("https://gym-management-smoky.vercel.app/api/addmembers", member)
+    axios.post("http://localhost:5000/api/addmembers", member)
       .then(() => {
         setAlert(true);
         setTimeout(() => setAlert(false), 3000);
   
         // ดึง ID ใหม่จาก Backend หลังจากเพิ่มสำเร็จ
-        axios.get("https://gym-management-smoky.vercel.app/api/members/latestId")
+        axios.get("http://localhost:5000/api/members/latestId")
           .then((response) => {
             setMember({
               id: response.data.latestId, // ใช้ ID ใหม่

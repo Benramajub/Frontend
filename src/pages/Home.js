@@ -1,215 +1,291 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Button,
+  Container,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
-import Container from '@mui/material/Container';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import DialogActions from '@mui/material/DialogActions';
-import Dialog from '@mui/material/Dialog';
-import DialogContent  from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import CardActions from '@mui/material/CardActions';  
-import CardContent from '@mui/material/CardContent';
-import Card from '@mui/material/Card';
-import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
-import { ThemeProvider } from '@mui/material/styles';  
-import { createTheme } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
-const customTheme = createTheme({
-  typography: {
-    fontFamily: '"Kanit", sans-serif',
-  },
-});
-
-function Home() {
+function AddFinger() {
   const [members, setMembers] = useState([]);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [selectedDeleteId, setSelectedDeleteId] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [alert, setAlert] = useState({ open: false, message: '', severity: 'info' });
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
-    axios.get('https://gym-management-smoky.vercel.app/api/members').then((response) => {
-      console.log(response.data);
-      setMembers(response.data);
-    });
-  }, []);
+    const fetchMembers = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/fingrtprints/members');
+        setMembers(response.data);
+      } catch (error) {
+        console.error('Error fetching members:', error);
+      }
+    };
+    fetchMembers();
 
-  const handleOpenDialog = (member) => {
-    setSelectedMember(member);
-    setOpenDialog(true);
+    // ✅ เปิด WebSocket
+    const ws = new WebSocket("ws://localhost:8080");
+
+    let scanTimeout; // 🔥 ตั้งตัวแปร Timeout
+
+    ws.onmessage = (event) => {
+      clearTimeout(scanTimeout); // ❌ เคลียร์ Timeout ถ้ามีการตอบกลับ
+      const data = JSON.parse(event.data);
+      console.log("📡 Received WebSocket data:", data);
+
+      // ✅ ถ้ามี fingerprintID แต่ status ไม่ใช่ "success" ให้แจ้ง "ลงทะเบียนไม่สำเร็จ!"
+      if (data.fingerprintID && data.status !== "success") {
+        setAlert({
+          open: true,
+          message: "ลงทะเบียนไม่สำเร็จ! กรุณาลองใหม่",
+          severity: "error",
+        });
+        setIsScanning(false);
+        setOpenDialog(false);
+        return;
+      }
+
+      // ✅ ลงทะเบียนสำเร็จ
+      if (data.status === "success") {
+        setAlert({
+          open: true,
+          message: `ลงทะเบียนสำเร็จ! Fingerprint ID: ${data.fingerprintID}`,
+          severity: "success",
+        });
+
+        setMembers((prev) => prev.filter((member) => member.id !== data.memberId));
+
+        setSelectedMemberId("");
+        setIsScanning(false);
+        setOpenDialog(false);
+      } 
+      
+
+
+      // 🔥 ถ้าลงทะเบียนไม่สำเร็จ
+      else if (data.status === "failed") {
+        setAlert({
+          open: true,
+          message: "ลงทะเบียนไม่สำเร็จ! กรุณาลองอีกครั้ง",
+          severity: "error",
+        });
+
+        setIsScanning(false);
+        setOpenDialog(false);
+      }
+    };
+
+    // 🔥 ตั้ง Timeout 5 วินาที ถ้าไม่มีการตอบกลับ
+    scanTimeout = setTimeout(() => {
+      setAlert({
+        open: true,
+        message: "ลงทะเบียนไม่สำเร็จ! ไม่มีการตอบกลับจากเซิร์ฟเวอร์",
+        severity: "error",
+      });
+
+      setIsScanning(false);
+      setOpenDialog(false);
+    }, ); // ⏳ 5 วินาที
+
+    return () => {
+      clearTimeout(scanTimeout); // ❌ เคลียร์ Timeout เมื่อ Component ถูก unmount
+      ws.close();
+    };
+}, []);
+
+
+
+const [deleteMembers, setDeleteMembers] = useState([]); // 🔹 รายชื่อสมาชิกที่ลงทะเบียนลายนิ้วมือแล้ว
+
+// ✅ ดึงข้อมูลสมาชิกที่มีลายนิ้วมือ
+const fetchDeleteMembers = async () => {
+  try {
+    const response = await axios.get("https://gym-management-smoky.vercel.app/members/registered");
+    setDeleteMembers(response.data);
+  } catch (error) {
+    console.error("Error fetching registered members:", error);
+  }
+};
+
+useEffect(() => {
+  fetchDeleteMembers(); // 🔥 โหลดสมาชิกที่มีลายนิ้วมือเมื่อหน้าโหลด
+}, []);
+
+const handleSelectDeleteMember = (event) => {
+  setSelectedDeleteId(event.target.value);
+};
+
+// ✅ ฟังก์ชันลบลายนิ้วมือ
+const handleDeleteFingerprint = async () => {
+  if (!selectedDeleteId) {
+    setAlert({ open: true, message: "กรุณาเลือกสมาชิกก่อนลบลายนิ้วมือ!", severity: "warning" });
+    return;
+  }
+
+  const confirmDelete = window.confirm(`คุณต้องการลบลายนิ้วมือของสมาชิก ID: ${selectedDeleteId} ใช่หรือไม่?`);
+  if (!confirmDelete) return;
+
+  try {
+    // ✅ ใช้ `POST` request และส่ง `memberId` ผ่าน `body`
+    const response = await axios.post(`https://gym-management-smoky.vercel.app/fingerprint/delete`, { memberId: selectedDeleteId });
+
+    if (response.status === 200) {
+      setAlert({ open: true, message: response.data.message, severity: "success" });
+
+      // 🔥 อัปเดตรายชื่อสมาชิกที่มีลายนิ้วมือ
+      setDeleteMembers((prev) => prev.filter((member) => member.id !== selectedDeleteId));
+      setSelectedDeleteId("");
+    } else {
+      setAlert({ open: true, message: "ลบลายนิ้วมือไม่สำเร็จ!", severity: "error" });
+    }
+  } catch (error) {
+    console.error("❌ Error deleting fingerprint:", error);
+    setAlert({ open: true, message: "เกิดข้อผิดพลาดในการลบลายนิ้วมือ!", severity: "error" });
+  }
+};
+
+
+
+
+
+  const handleSelectMember = (event) => {
+    setSelectedMemberId(event.target.value);
   };
 
-  const handleCloseDialog = () => {
+
+  const handleCancelScan = () => {
+    setIsScanning(false);
     setOpenDialog(false);
-    setSelectedMember(null);
   };
+  
+  const handleStartScan = async () => {
+    if (!selectedMemberId) {
+      setAlert({ open: true, message: 'กรุณาเลือกสมาชิกก่อนเริ่มการสแกน!', severity: 'warning' });
+      return;
+    }
+  
+    setIsScanning(true);
+    setOpenDialog(true);
+  
+    try {
+      console.log("เริ่มการสแกนสำหรับสมาชิก:", selectedMemberId);
+  
+      const response = await axios.post('http://localhost:5000/api/fingerprint/enroll', { memberId: selectedMemberId });
+  
+      if (response.data.status === "exists") {
+        setAlert({ open: true, message: 'ลายนิ้วมือนี้มีอยู่แล้ว!', severity: 'warning' });
+        handleCancelScan(); // ปิด Dialog ถ้ามีข้อมูลอยู่แล้ว
+        return;
+      }
+  
+    } catch (error) {
+      console.error('Error during fingerprint scan:', error);
+      setAlert({ open: true, message: 'เกิดข้อผิดพลาดในการสแกนลายนิ้วมือ!', severity: 'error' });
+      handleCancelScan();
+    }
+  };
+
+
 
   return (
-    <ThemeProvider theme={customTheme}>
-      <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'url(/images/gym4.jpg) no-repeat center center fixed',
-          backgroundSize: 'cover',
-          zIndex: -1,
-        }}
-      />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Paper 
-          elevation={3}
-          sx={{
-            p: 5,
-            background: 'linear-gradient(to right,rgba(25, 116, 162, 0.8),rgb(30, 135, 188))',
-            borderRadius: '32px',
-          }}
-        >
-          <Typography
-            variant="h3"
-            gutterBottom
-            sx={{ textAlign: 'center', color: 'white', fontWeight: 'bold', mb: 3 }}
-          >
-            ยินดีต้อนรับเข้าสู่ระบบจัดการสมาชิกฟิตเนส
-          </Typography>
-          <br />
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ textAlign: 'center', color: 'white', fontWeight: 'bold', mb: 3 }}
-          >
-            ข้อมูลสมาชิก
-          </Typography>
-          <Grid container spacing={2}>
-            {members.map((member) => (
-              <Grid item xs={12} sm={6} md={4} key={member.id}>
-                <Card
-                  elevation={3}
-                  sx={{
-                    borderRadius: '12px',
-                    boxShadow: '0px 4px 10px rgba(255, 255, 255, 0.5)',
-                    transition: 'transform 0.3s ease-in-out',
-                    '&:hover': { transform: 'scale(1.05)' },
-                  }}
-                >
-                  <CardContent>
-                    <Typography variant="h6">
-                      {member.firstName} {member.lastName}
-                    </Typography>
-                    <Typography>โทรศัพท์ : {member.phone}</Typography>
-                    <Typography>อีเมลล์ : {member.email}</Typography>
-                    <Typography>แต้มสะสม : {member.points}</Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button
-                      size="small"
-                      sx={{
-                        backgroundColor: 'rgb(28, 118, 69)',
-                        color: '#fff',
-                      }}
-                      onClick={() => handleOpenDialog(member)}
-                    >
-                      ดูข้อมูลสมาชิก
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+    <Container>
+      <h2>ลงทะเบียนลายนิ้วมือ</h2>
 
-          {/* Dialog สำหรับแสดงข้อมูลสมาชิก */}
-          <Dialog
-            open={openDialog}
-            onClose={handleCloseDialog}
-            scroll="paper"
-            PaperProps={{
-              sx: { width: '420px', maxWidth: '75vw', borderRadius: '16px' },
-            }}
-          >
-            <DialogTitle sx={{ fontSize: '24px', fontWeight: 'bold' }}>
-              ข้อมูลสมาชิก
-            </DialogTitle>
-            <DialogContent>
-              {selectedMember && (
-                <Box
-                  sx={{
-                    textAlign: 'left',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1,
-                  }}
-                >
-                  <Typography>ชื่อ : {`${selectedMember.firstName} ${selectedMember.lastName}`}</Typography>
-                  <Typography>โทรศัพท์ : {selectedMember.phone}</Typography>
-                  <Typography>อีเมล : {selectedMember.email}</Typography>
-                  <Typography>แต้มสะสม : {selectedMember.points}</Typography>
-                  <Typography>ระยะเวลา : {selectedMember.duration} เดือน</Typography>
-                  <Typography>
-                    วันที่เริ่มต้น :{' '}
-                    {new Date(selectedMember.startDate).toLocaleDateString()}
-                  </Typography>
-                  <Typography>
-                    วันที่สิ้นสุด :{' '}
-                    {new Date(selectedMember.endDate).toLocaleDateString()}
-                  </Typography>
-                </Box>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog} color="primary">
-                ปิด
-              </Button>
-            </DialogActions>
-          </Dialog>
-          <br />
-          <br />
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{
-              color: 'white',
-              textAlign: 'center',
-              mt: 4,
-              fontWeight: 'bold',
-            }}
-          >
-            คำแนะนำเกี่ยวกับการออกกำลังกาย
-          </Typography>
-          <Box
-            sx={{
-              backgroundColor: 'rgb(255, 255, 255)',
-              p: 2,
-              borderRadius: '12px',
-            }}
-          >
-            <Typography fontSize="18px">
-              <FitnessCenterIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-              1. ออกกำลังกายอย่างน้อย 150 นาที/สัปดาห์ เพื่อสุขภาพที่ดี
-            </Typography>
-            <Typography fontSize="18px">
-              <FitnessCenterIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-              2. รับประทานอาหารที่มีประโยชน์และหลากหลาย
-            </Typography>
-            <Typography fontSize="18px">
-              <FitnessCenterIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-              3. ดื่มน้ำให้เพียงพอในแต่ละวัน
-            </Typography>
-            <Typography fontSize="18px">
-              <FitnessCenterIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-              4. นอนหลับให้เพียงพอเพื่อฟื้นฟูร่างกาย
-            </Typography>
-            <Typography fontSize="18px">
-              <FitnessCenterIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-              5. หลีกเลี่ยงการนั่งนาน ๆ และเคลื่อนไหวบ่อย ๆ
-            </Typography>
-          </Box>
-        </Paper>
-      </Container>
-    </ThemeProvider>
+      <FormControl fullWidth margin="normal">
+        <InputLabel>เลือกสมาชิก</InputLabel>
+        <Select value={selectedMemberId} onChange={handleSelectMember}>
+          {members.length > 0 ? (
+            members.map((member) => (
+              <MenuItem key={member.id} value={member.id}>
+                {`${member.id} - ${member.firstName} ${member.lastName}`}
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled>ไม่มีสมาชิกที่สามารถลงทะเบียนได้</MenuItem>
+          )}
+        </Select>
+      </FormControl>
+
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleStartScan}
+        disabled={isScanning || members.length === 0}
+        fullWidth
+      >
+        {isScanning ? (
+          <>
+            <CircularProgress size={24} style={{ marginRight: 10, color: 'white' }} />
+            กำลังสแกน...
+          </>
+        ) : (
+          'เริ่มสแกนลายนิ้วมือ'
+        )}
+      </Button>
+
+      <h2>ลบลายนิ้วมือ</h2>
+<FormControl fullWidth margin="normal">
+  <InputLabel>เลือกสมาชิกที่ต้องการลบลายนิ้วมือ</InputLabel>
+  <Select value={selectedDeleteId} onChange={handleSelectDeleteMember}>
+    {deleteMembers.length > 0 ? (
+      deleteMembers.map((member) => (
+        <MenuItem key={member.id} value={member.id}>
+          {`${member.id} - ${member.firstName} ${member.lastName}`}
+        </MenuItem>
+      ))
+    ) : (
+      <MenuItem disabled>ไม่มีสมาชิกที่ลงทะเบียนลายนิ้วมือ</MenuItem>
+    )}
+  </Select>
+</FormControl>
+
+<Button
+  variant="contained"
+  color="secondary"
+  onClick={handleDeleteFingerprint}
+  disabled={!selectedDeleteId}
+  fullWidth
+  startIcon={<DeleteIcon />}
+>
+  ลบลายนิ้วมือ
+</Button>
+
+      <Dialog open={openDialog} maxWidth="xs" fullWidth>
+      <DialogTitle align="center">กำลังสแกนลายนิ้วมือ</DialogTitle>
+      <DialogContent style={{ textAlign: 'center', padding: '20px' }}>
+        <CircularProgress size={50} />
+        <p style={{ marginTop: '10px' }}>กรุณาวางนิ้วมือบนเครื่องสแกน...</p>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCancelScan} color="secondary">
+          ยกเลิก
+        </Button>
+      </DialogActions>
+    </Dialog>
+
+    <Snackbar
+      open={alert.open}
+      autoHideDuration={4000}
+      onClose={() => setAlert({ open: false, message: '', severity: '' })}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    >
+      <Alert severity={alert.severity}>{alert.message}</Alert>
+    </Snackbar>
+    </Container>
   );
 }
 
-export default Home;
+export default AddFinger;

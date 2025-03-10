@@ -83,7 +83,7 @@ function Payment() {
       
       if (paymentType === 'payment1') {
         // 📌 **API ชำระเงินของ Payment1**
-        await axios.post('https://gym-management-smoky.vercel.app/api/payments', {
+        await axios.post('http://localhost:5000/api/payments', {
           memberId: payment.memberId,
           amount: payment.amount,
           date: payment.date
@@ -91,7 +91,7 @@ function Payment() {
 
       } else if (paymentType === 'payment2') {
         // 📌 **API ชำระเงินของ Payment2 และสร้างรหัส**
-        const response = await axios.post('https://gym-management-smoky.vercel.app/api/dailymembers', {
+        const response = await axios.post('http://localhost:5000/api/dailymembers', {
           name: payment.name
         });
 

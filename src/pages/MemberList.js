@@ -50,7 +50,7 @@ function MemberList() {
   const [dailySearchQuery, setDailySearchQuery] = useState(''); // 🌟 แยก state ค้นหาสมาชิกรายวัน
  
   useEffect(() => {
-    axios.get('https://gym-management-smoky.vercel.app/api/members').then((response) => {
+    axios.get('http://localhost:5000/api/members').then((response) => {
       const updatedMembers = response.data.map((member) => ({
         ...member,
         status: getStatus(member), // คำนวณสถานะใหม่
@@ -65,7 +65,7 @@ function MemberList() {
       });
     });
   
-    axios.get('https://gym-management-smoky.vercel.app/api/payments').then((response) => {
+    axios.get('http://localhost:5000/api/payments').then((response) => {
       setPayments(response.data);
     });
   
@@ -80,7 +80,7 @@ function MemberList() {
     console.log(`🔄 Updating status for member ${id}: ${status}`); // Debug log
   
     try {
-      const response = await axios.put(`https://gym-management-smoky.vercel.app/api/members/${id}/status`, { status });
+      const response = await axios.put(`http://localhost:5000/api/members/${id}/status`, { status });
       console.log(`✅ Server Response:`, response.data);
     } catch (error) {
       console.error(`❌ Error updating status for member ${id}:`, error.response?.data || error.message);
@@ -172,11 +172,11 @@ function MemberList() {
         let response;
         if (viewMode === 'monthly') {
             // 🔍 ค้นหาสมาชิกรายเดือน
-            response = await axios.get(`https://gym-management-smoky.vercel.app/api/member/search?q=${searchQuery}`);
+            response = await axios.get(`http://localhost:5000/api/member/search?q=${searchQuery}`);
             setFilteredMembers(response.data);
         } else {
             // 🔍 ค้นหาสมาชิกรายวัน
-            response = await axios.get(`https://gym-management-smoky.vercel.app/api/dailymembers/search?q=${searchQuery}`);
+            response = await axios.get(`http://localhost:5000/api/dailymembers/search?q=${searchQuery}`);
             setFilteredDailyMembers(response.data);
         }
     } catch (error) {
@@ -229,9 +229,9 @@ const handleSaveEdit = async () => {
           updatedMember.age = editMember.age;
       }
 
-      await axios.put(`https://gym-management-smoky.vercel.app/api/members/${editMember.id}`, updatedMember);
+      await axios.put(`http://localhost:5000/api/members/${editMember.id}`, updatedMember);
 
-      const response = await axios.get('https://gym-management-smoky.vercel.app/api/members');
+      const response = await axios.get('http://localhost:5000/api/members');
       setMembers(response.data);
       setFilteredMembers(response.data);
 
@@ -252,7 +252,7 @@ const handleSaveEdit = async () => {
   // ฟังก์ชันลบสมาชิก
   const handleDelete = async () => {
     try {
-        await axios.delete(`https://gym-management-smoky.vercel.app/api/members/${memberToDelete.id}`);
+        await axios.delete(`http://localhost:5000/api/members/${memberToDelete.id}`);
         setMembers((prev) => prev.filter((member) => member.id !== memberToDelete.id));
         setFilteredMembers((prev) => prev.filter((member) => member.id !== memberToDelete.id));
 

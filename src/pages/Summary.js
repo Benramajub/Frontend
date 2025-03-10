@@ -17,7 +17,7 @@ function Summary() {
   const [isPayments, setIsPayments] = useState(true);
 
   useEffect(() => {
-    axios.get('https://gym-management-smoky.vercel.app/api/payments')
+    axios.get('http://localhost:5000/api/payments')
       .then((response) => {
         setPayments(response.data);
         calculatePaymentSummaries(response.data);

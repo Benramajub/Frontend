@@ -18,7 +18,7 @@ function Reports() {
   useEffect(() => {
     const fetchScanLogs = async () => {
       try {
-        const response = await axios.get("https://gym-management-smoky.vercel.app/api/fingerreports");
+        const response = await axios.get("http://localhost:5000/api/fingerreports");
         setScanLogs(response.data);
       } catch (error) {
         console.error("Error fetching scan logs:", error);
