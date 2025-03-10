@@ -385,8 +385,8 @@ const paginatedDailyMembers = dailymembers.slice(
                       <TableCell>{member.phone}</TableCell>
                       <TableCell>{member.duration}</TableCell>
                       <TableCell>{member.points}</TableCell>
-                      <TableCell>{new Date(member.startDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(member.endDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(member.startDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })}</TableCell>
+                      <TableCell>{new Date(member.endDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })}</TableCell>
                       <TableCell>{getStatus(member)}</TableCell>
                       <TableCell>
                       <Button
