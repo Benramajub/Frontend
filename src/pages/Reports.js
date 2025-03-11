@@ -32,7 +32,7 @@ function Reports() {
         const response = await axios.get("http://localhost:5000/api/daily-reports");
         const formattedData = response.data.map(item => ({
           ...item,
-          timestamp: new Date().toISOString().replace("T", " ").split(".")[0] // ใช้เวลาปัจจุบัน
+          timestamp: new Date(item.timestamp).toISOString().replace("T", " ").split(".")[0]
         }));
         setDailyReports(formattedData);
       } catch (error) {
