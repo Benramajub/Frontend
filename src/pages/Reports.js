@@ -26,7 +26,7 @@ function Reports() {
         setLoading(false);
       }
     };
-
+  
     const fetchDailyReports = async () => {
       try {
         const response = await axios.get("http://localhost:5000/api/daily-reports");
@@ -39,20 +39,15 @@ function Reports() {
         console.error("Error fetching daily reports:", error);
       }
     };
-
+  
     fetchScanLogs();
     fetchDailyReports();
-
-    // ตั้งค่า interval เพื่ออัปเดตเวลาใน dailyReports ทุก ๆ วินาที
+  
+    // ตั้งค่า interval เพื่อดึงข้อมูลรายงานทุก ๆ 5 นาที
     const intervalId = setInterval(() => {
-      setDailyReports(prevReports => 
-        prevReports.map(item => ({
-          ...item,
-          timestamp: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) // อัปเดตเวลาเป็นเวลาปัจจุบัน
-        }))
-      );
-    }, 1000);
-
+      fetchDailyReports();
+    }, 300000); // 300000 ms = 5 นาที
+  
     return () => clearInterval(intervalId); // ทำความสะอาดเมื่อ component ถูก unmount
   }, []);
 
