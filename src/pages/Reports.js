@@ -32,7 +32,7 @@ function Reports() {
         const response = await axios.get("http://localhost:5000/api/daily-reports");
         const formattedData = response.data.map(item => ({
           ...item,
-          timestamp: new Date(item.timestamp).toISOString().replace("T", " ").split(".")[0]
+          timestamp: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) // ใช้เวลาปัจจุบันในประเทศไทย
         }));
         setDailyReports(formattedData);
       } catch (error) {
@@ -42,6 +42,18 @@ function Reports() {
 
     fetchScanLogs();
     fetchDailyReports();
+
+    // ตั้งค่า interval เพื่ออัปเดตเวลาใน dailyReports ทุก ๆ วินาที
+    const intervalId = setInterval(() => {
+      setDailyReports(prevReports => 
+        prevReports.map(item => ({
+          ...item,
+          timestamp: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) // อัปเดตเวลาเป็นเวลาปัจจุบัน
+        }))
+      );
+    }, 1000);
+
+    return () => clearInterval(intervalId); // ทำความสะอาดเมื่อ component ถูก unmount
   }, []);
 
   const customTheme = createTheme({
@@ -87,7 +99,7 @@ function Reports() {
           label: 'จำนวนคนเข้าใช้',
           data: counts,
           fill: false,
-          borderColor: 'rgba(75,192,192,1)',
+          borderColor: 'rgba(75 ,192,192,1)',
           tension: 0.1,
         },
       ],
@@ -96,58 +108,58 @@ function Reports() {
 
   return (
     <ThemeProvider theme={customTheme}>
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: 'url(/images/gym4.jpg) no-repeat center center fixed',
-            backgroundSize: 'cover',
-            zIndex: -1,
-          }}
-        />
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Paper elevation={3} sx={{ p: 3, background:"linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px"}}>
-            <Typography
-              variant="h5"
-              sx={{
-                color: "white",
-                padding: "10px",
-                fontWeight: "bold",
-                borderRadius: "5px",
-                textAlign: "left",
-              }}
-            >รายงาน
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'url(/images/gym4.jpg) no-repeat center center fixed',
+          backgroundSize: 'cover',
+          zIndex: -1,
+        }}
+      />
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Paper elevation={3} sx={{ p: 3, background: "linear-gradient(to right,rgba(27, 134, 187, 0.8),rgb(30, 135, 188))", borderRadius: "32px" }}>
+          <Typography
+            variant="h5"
+            sx={{
+              color: "white",
+              padding: "10px",
+              fontWeight: "bold",
+              borderRadius: "5px",
+              textAlign: "left",
+            }}
+          >รายงาน
+          </Typography>
+          <Box mb={2}>
+            <Button variant="contained" color="primary" onClick={() => setView("scanLogs")} style={{ marginRight: 10 }}>
+              รายงานการสแกน
+            </Button>
+            <Button variant="contained" color="secondary" onClick={() => setView("dailyReports")}>
+              รายงานรายวัน
+            </Button>
+          </Box>
+
+          <Paper style={{ padding: "10px", marginBottom: "20px" }}>
+            <Typography variant="h5" gutterBottom>
+              {view === "scanLogs" ? "กราฟรายงานการสแกน" : "กราฟรายงานรายวัน"}
             </Typography>
-      <Box mb={2}>
-        <Button variant="contained" color="primary" onClick={() => setView("scanLogs")} style={{ marginRight: 10 }}>
-          รายงานการสแกน
-        </Button>
-        <Button variant="contained" color="secondary" onClick={() => setView("dailyReports")}> 
-          รายงานรายวัน
-        </Button>
-      </Box>
+            <Line data={view === "scanLogs" ? prepareChartData(scanLogs) : prepareChartData(dailyReports)} />
+          </Paper>
 
-      <Paper style={{ padding: "10px", marginBottom: "20px" }}>
-        <Typography variant="h5" gutterBottom>
-          {view === "scanLogs" ? "กราฟรายงานการสแกน" : "กราฟรายงานรายวัน"}
-        </Typography>
-        <Line data={view === "scanLogs" ? prepareChartData(scanLogs) : prepareChartData(dailyReports)} />
-      </Paper>
-
-      <Paper style={{ height: 400, width: "98%", padding: "10px" }}>
-        <DataGrid
-          rows={view === "scanLogs" ? scanLogs : dailyReports}
-          columns={view === "scanLogs" ? scanLogsColumns : dailyReportsColumns}
-          pageSize={5}
-          loading={loading}
-          rowsPerPageOptions={[5, 10, 20]}
-        />
-      </Paper>
-      </Paper>
-    </Container>
+          <Paper style={{ height: 400, width: "98%", padding: "10px" }}>
+            <DataGrid
+              rows={view === "scanLogs" ? scanLogs : dailyReports}
+              columns={view === "scanLogs" ? scanLogsColumns : dailyReportsColumns}
+              pageSize={5}
+              loading={loading}
+              rowsPerPageOptions={[5, 10, 20]}
+            />
+          </Paper>
+        </Paper>
+      </Container>
     </ThemeProvider>
   );
 }
