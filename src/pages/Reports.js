@@ -32,7 +32,7 @@ function Reports() {
         const response = await axios.get("http://localhost:5000/api/daily-reports");
         const formattedData = response.data.map(item => ({
           ...item,
-          timestamp: new Date(item.timestamp).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) // แปลงเวลาเป็นเวลาประเทศไทย
+          timestamp: new Date().toISOString().replace("T", " ").split(".")[0] // ใช้เวลาปัจจุบัน
         }));
         setDailyReports(formattedData);
       } catch (error) {
